@@ -16,229 +16,116 @@
   --warn:#d29922;--purple:#bc8cff;
   --text:#e6edf3;--text2:#8b949e;--text3:#484f58;
   --font:'Space Grotesk',sans-serif;--mono:'JetBrains Mono',monospace;
-  --sidebar-w:260px;
-  --topbar-h:56px;
+  --sidebar-w:260px;--topbar-h:56px;
 }
-
 body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;min-height:100vh;overflow-x:hidden}
 
-/* ===== TOPBAR ===== */
-.topbar{
-  height:var(--topbar-h);background:var(--bg2);
-  border-bottom:1px solid var(--border);
-  display:flex;align-items:center;justify-content:space-between;
-  padding:0 1.2rem;position:fixed;top:0;left:0;right:0;z-index:200;
-}
+/* TOPBAR */
+.topbar{height:var(--topbar-h);background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 1.2rem;position:fixed;top:0;left:0;right:0;z-index:200}
 .topbar-left{display:flex;align-items:center;gap:12px}
-.hamburger{
-  width:36px;height:36px;border-radius:8px;border:none;
-  background:transparent;cursor:pointer;display:flex;
-  flex-direction:column;align-items:center;justify-content:center;gap:5px;
-  transition:background .15s;padding:0;
-}
+.hamburger{width:36px;height:36px;border-radius:8px;border:none;background:transparent;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;transition:background .15s;padding:0}
 .hamburger:hover{background:var(--bg3)}
-.hamburger span{
-  display:block;width:18px;height:1.5px;background:var(--text2);
-  border-radius:2px;transition:all .3s;transform-origin:center;
-}
+.hamburger span{display:block;width:18px;height:1.5px;background:var(--text2);border-radius:2px;transition:all .3s;transform-origin:center}
 .hamburger.open span:nth-child(1){transform:translateY(6.5px) rotate(45deg)}
 .hamburger.open span:nth-child(2){opacity:0;transform:scaleX(0)}
 .hamburger.open span:nth-child(3){transform:translateY(-6.5px) rotate(-45deg)}
 .brand{display:flex;align-items:center;gap:8px}
-.brand-icon{
-  width:28px;height:28px;background:var(--accent);border-radius:6px;
-  display:flex;align-items:center;justify-content:center;
-}
+.brand-icon{width:28px;height:28px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center}
 .brand-icon i{color:#0d1117;font-size:15px}
-.brand-name{font-size:15px;font-weight:600;letter-spacing:.01em}
+.brand-name{font-size:15px;font-weight:600}
 .brand-name span{color:var(--accent)}
 .topbar-right{display:flex;align-items:center;gap:8px}
-.ws-pill{
-  display:flex;align-items:center;gap:6px;
-  padding:4px 10px;border-radius:20px;
-  border:1px solid var(--border);background:var(--bg3);
-  font-size:11px;font-family:var(--mono);color:var(--text2);
-}
+.ws-pill{display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:20px;border:1px solid var(--border);background:var(--bg3);font-size:11px;font-family:var(--mono);color:var(--text2)}
 .ws-dot{width:6px;height:6px;border-radius:50%;background:var(--accent2);animation:pulse 2s infinite}
 .ws-dot.off{background:var(--accent3);animation:none}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-.user-chip{
-  display:flex;align-items:center;gap:7px;padding:4px 10px;
-  border-radius:20px;border:1px solid var(--border);
-  background:var(--bg3);font-size:12px;color:var(--text2);cursor:pointer;
-}
-.user-chip:hover{border-color:var(--border2);color:var(--text)}
-.logout-btn{
-  width:32px;height:32px;border-radius:8px;border:1px solid var(--border);
-  background:transparent;color:var(--text3);cursor:pointer;
-  display:flex;align-items:center;justify-content:center;transition:all .15s;
-}
+.role-pill{font-size:10px;font-weight:700;padding:3px 8px;border-radius:8px;font-family:var(--mono);text-transform:uppercase}
+.role-pill.admin{background:rgba(88,166,255,.15);color:var(--accent)}
+.role-pill.viewer{background:rgba(188,140,255,.15);color:var(--purple)}
+.user-chip{display:flex;align-items:center;gap:7px;padding:4px 10px;border-radius:20px;border:1px solid var(--border);background:var(--bg3);font-size:12px;color:var(--text2)}
+.logout-btn{width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
 .logout-btn:hover{border-color:var(--accent3);color:var(--accent3)}
 
-/* ===== SIDEBAR OVERLAY ===== */
-.sidebar-overlay{
-  position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:150;
-  opacity:0;pointer-events:none;transition:opacity .25s;
-}
+/* SIDEBAR */
+.sidebar-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:150;opacity:0;pointer-events:none;transition:opacity .25s}
 .sidebar-overlay.open{opacity:1;pointer-events:all}
-
-/* ===== SIDEBAR ===== */
-.sidebar{
-  position:fixed;top:0;left:calc(-1 * var(--sidebar-w));bottom:0;
-  width:var(--sidebar-w);background:var(--bg2);
-  border-right:1px solid var(--border);z-index:160;
-  transition:left .3s cubic-bezier(.4,0,.2,1);
-  display:flex;flex-direction:column;
-  padding-top:var(--topbar-h);
-}
+.sidebar{position:fixed;top:0;left:calc(-1 * var(--sidebar-w));bottom:0;width:var(--sidebar-w);background:var(--bg2);border-right:1px solid var(--border);z-index:160;transition:left .3s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;padding-top:var(--topbar-h)}
 .sidebar.open{left:0}
 .sidebar-inner{flex:1;overflow-y:auto;padding:1rem 0}
-.nav-section{
-  font-size:10px;font-weight:600;color:var(--text3);
-  text-transform:uppercase;letter-spacing:.1em;
-  padding:.8rem 1.2rem .3rem;
-}
-.nav-item{
-  display:flex;align-items:center;gap:10px;
-  padding:8px 1.2rem;font-size:13px;font-weight:500;
-  color:var(--text2);cursor:pointer;border-left:2px solid transparent;
-  transition:all .15s;border-radius:0;position:relative;
-}
+.nav-section{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;padding:.8rem 1.2rem .3rem}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 1.2rem;font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;border-left:2px solid transparent;transition:all .15s}
 .nav-item:hover{color:var(--text);background:var(--bg3)}
-.nav-item.active{
-  color:var(--accent);border-left-color:var(--accent);
-  background:rgba(88,166,255,.08);
-}
+.nav-item.active{color:var(--accent);border-left-color:var(--accent);background:rgba(88,166,255,.08)}
 .nav-item i{font-size:16px;width:20px;text-align:center;flex-shrink:0}
-.nav-item .badge{
-  margin-left:auto;font-size:10px;padding:1px 6px;
-  border-radius:10px;background:var(--accent);color:#0d1117;font-weight:600;
-}
-.sidebar-footer{
-  padding:1rem 1.2rem;border-top:1px solid var(--border);
-}
+.nav-item .badge{margin-left:auto;font-size:10px;padding:1px 6px;border-radius:10px;background:var(--accent);color:#0d1117;font-weight:600}
+.nav-item.disabled{opacity:.35;cursor:not-allowed;pointer-events:none}
+.nav-lock{margin-left:auto;font-size:12px;color:var(--text3)}
+.sidebar-footer{padding:1rem 1.2rem;border-top:1px solid var(--border)}
 .sidebar-footer-info{font-size:11px;color:var(--text3);font-family:var(--mono)}
 
-/* ===== MAIN CONTENT ===== */
-.main{
-  margin-top:var(--topbar-h);padding:1.5rem;
-  min-height:calc(100vh - var(--topbar-h));
-}
+/* MAIN */
+.main{margin-top:var(--topbar-h);padding:1.5rem;min-height:calc(100vh - var(--topbar-h))}
 .page{display:none}
 .page.active{display:block;animation:fadeIn .2s ease}
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-.page-header{margin-bottom:1.5rem}
-.page-header h1{font-size:20px;font-weight:700;letter-spacing:-.01em}
-.page-header p{font-size:13px;color:var(--text2);margin-top:4px}
+.page-header{margin-bottom:1.5rem;display:flex;align-items:flex-start;justify-content:space-between}
+.page-header-text h1{font-size:20px;font-weight:700;letter-spacing:-.01em}
+.page-header-text p{font-size:13px;color:var(--text2);margin-top:4px}
 
-/* ===== STAT CARDS ===== */
+/* STAT CARDS */
 .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:1.5rem}
-.stat-card{
-  background:var(--bg2);border:1px solid var(--border);
-  border-radius:10px;padding:.9rem 1rem;position:relative;overflow:hidden;
-}
-.stat-card::before{
-  content:'';position:absolute;top:0;left:0;right:0;height:2px;
-}
+.stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:.9rem 1rem;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
 .stat-card.c-blue::before{background:var(--accent)}
 .stat-card.c-green::before{background:var(--accent2)}
 .stat-card.c-red::before{background:var(--accent3)}
 .stat-card.c-purple::before{background:var(--purple)}
 .stat-label{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
 .stat-val{font-size:26px;font-weight:700;font-family:var(--mono);line-height:1}
-.stat-val.blue{color:var(--accent)}
-.stat-val.green{color:var(--accent2)}
-.stat-val.red{color:var(--text3)}
-.stat-val.purple{color:var(--purple)}
+.stat-val.blue{color:var(--accent)}.stat-val.green{color:var(--accent2)}.stat-val.red{color:var(--text3)}.stat-val.purple{color:var(--purple)}
 .stat-sub{font-size:11px;color:var(--text3);margin-top:4px}
 
-/* ===== SECTION TITLE ===== */
-.sec-title{
-  font-size:12px;font-weight:600;color:var(--text2);
-  text-transform:uppercase;letter-spacing:.08em;
-  margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;
-}
-.sec-btn{
-  font-size:11px;padding:4px 10px;border-radius:6px;
-  border:1px solid var(--border);background:transparent;
-  color:var(--text2);cursor:pointer;font-family:var(--font);
-  display:flex;align-items:center;gap:5px;
-}
+/* SEC TITLE */
+.sec-title{font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between}
+.sec-btn{font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;font-family:var(--font);display:flex;align-items:center;gap:5px}
 .sec-btn:hover{border-color:var(--border2);color:var(--text)}
 
-/* ===== DEVICE CARDS ===== */
+/* DEVICE CARDS */
 .device-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:1.5rem}
-.device-card{
-  background:var(--bg2);border:1px solid var(--border);
-  border-radius:10px;padding:1rem;cursor:pointer;
-  transition:border-color .2s,transform .15s;
-  border-left:3px solid var(--border);
-}
+.device-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1rem;transition:border-color .2s,transform .15s;border-left:3px solid var(--border)}
 .device-card:hover{border-color:var(--border2);transform:translateY(-1px)}
 .device-card.online{border-left-color:var(--accent2)}
 .device-card.offline{border-left-color:var(--border)}
-.device-card.warning{border-left-color:var(--warn)}
 .device-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
-.device-icon{
-  width:32px;height:32px;border-radius:7px;
-  background:var(--bg3);display:flex;align-items:center;justify-content:center;
-}
-.status-pill{
-  font-size:10px;font-weight:600;padding:2px 7px;border-radius:8px;
-  font-family:var(--mono);
-}
+.device-icon{width:32px;height:32px;border-radius:7px;background:var(--bg3);display:flex;align-items:center;justify-content:center}
+.status-pill{font-size:10px;font-weight:600;padding:2px 7px;border-radius:8px;font-family:var(--mono)}
 .status-pill.online{background:rgba(63,185,80,.15);color:var(--accent2)}
 .status-pill.offline{background:rgba(72,79,88,.3);color:var(--text3)}
 .device-name{font-size:13px;font-weight:600;margin-bottom:2px}
 .device-meta{font-size:11px;color:var(--text3);font-family:var(--mono)}
-.device-metrics{
-  display:grid;grid-template-columns:repeat(3,1fr);
-  gap:4px;margin-top:10px;padding-top:10px;
-  border-top:1px solid var(--border);
-}
+.device-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
 .metric{text-align:center}
 .metric .val{font-size:13px;font-weight:600;font-family:var(--mono)}
 .metric .key{font-size:10px;color:var(--text3)}
 
-/* ===== CONTROL PANEL ===== */
-.ctrl-card{
-  background:var(--bg2);border:1px solid var(--border);
-  border-radius:10px;padding:1.1rem;margin-bottom:.8rem;
-}
+/* CONTROL */
+.ctrl-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1.1rem;margin-bottom:.8rem}
 .ctrl-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;padding-bottom:.8rem;border-bottom:1px solid var(--border)}
 .ctrl-title{display:flex;align-items:center;gap:10px}
 .toggle-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)}
 .toggle-row:last-of-type{border-bottom:none}
 .toggle-label{display:flex;align-items:center;gap:8px;font-size:13px}
-.toggle{
-  width:38px;height:21px;border-radius:11px;
-  background:var(--bg3);border:1px solid var(--border);
-  cursor:pointer;position:relative;transition:all .2s;flex-shrink:0;
-}
+.toggle{width:38px;height:21px;border-radius:11px;background:var(--bg3);border:1px solid var(--border);cursor:pointer;position:relative;transition:all .2s;flex-shrink:0}
 .toggle.on{background:var(--accent2);border-color:var(--accent2)}
-.toggle::after{
-  content:'';position:absolute;top:2px;left:2px;
-  width:15px;height:15px;border-radius:50%;
-  background:#fff;transition:transform .2s;
-}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;background:#fff;transition:transform .2s}
 .toggle.on::after{transform:translateX(17px)}
+.toggle.locked{opacity:.4;cursor:not-allowed}
 
-/* ===== LOGS ===== */
-.log-wrap{
-  background:var(--bg2);border:1px solid var(--border);
-  border-radius:10px;overflow:hidden;
-}
-.log-head{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:.7rem 1rem;border-bottom:1px solid var(--border);
-  font-size:11px;color:var(--text3);font-family:var(--mono);
-}
+/* LOGS */
+.log-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.log-head{display:flex;align-items:center;justify-content:space-between;padding:.7rem 1rem;border-bottom:1px solid var(--border);font-size:11px;color:var(--text3);font-family:var(--mono)}
 .log-body{padding:.3rem 0}
-.log-row{
-  display:flex;gap:10px;padding:5px 1rem;
-  font-size:11px;font-family:var(--mono);
-  border-bottom:1px solid var(--border);
-}
+.log-row{display:flex;gap:10px;padding:5px 1rem;font-size:11px;font-family:var(--mono);border-bottom:1px solid var(--border)}
 .log-row:last-child{border-bottom:none}
 .log-row:hover{background:var(--bg3)}
 .log-time{color:var(--text3);flex-shrink:0;width:60px}
@@ -250,91 +137,59 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 .log-lvl.warn{background:rgba(210,153,34,.15);color:var(--warn)}
 .log-lvl.error{background:rgba(247,129,102,.15);color:var(--accent3)}
 
-/* ===== ADD DEVICE BTN ===== */
-.add-card{
-  border:1.5px dashed var(--border2);border-radius:10px;
-  padding:1.2rem;display:flex;align-items:center;justify-content:center;
-  gap:8px;cursor:pointer;color:var(--text3);font-size:13px;
-  transition:all .2s;background:transparent;width:100%;font-family:var(--font);
-}
+/* ADD BTN */
+.add-card{border:1.5px dashed var(--border2);border-radius:10px;padding:1.2rem;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;color:var(--text3);font-size:13px;transition:all .2s;background:transparent;width:100%;font-family:var(--font)}
 .add-card:hover{border-color:var(--accent);color:var(--accent);background:rgba(88,166,255,.04)}
+.add-card.locked{opacity:.3;cursor:not-allowed;pointer-events:none}
 
-/* ===== SETTINGS ===== */
-.settings-card{
-  background:var(--bg2);border:1px solid var(--border);
-  border-radius:10px;padding:1.1rem;margin-bottom:.8rem;
-}
-.settings-card h3{
-  font-size:11px;font-weight:600;color:var(--text3);
-  text-transform:uppercase;letter-spacing:.08em;margin-bottom:.8rem;
-}
-.settings-row{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;
-}
+/* USER MANAGEMENT */
+.user-table{width:100%;border-collapse:collapse}
+.user-table th{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;padding:8px 1rem;text-align:left;border-bottom:1px solid var(--border)}
+.user-table td{padding:10px 1rem;font-size:13px;border-bottom:1px solid var(--border)}
+.user-table tr:last-child td{border-bottom:none}
+.user-table tr:hover td{background:var(--bg3)}
+
+/* SETTINGS */
+.settings-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1.1rem;margin-bottom:.8rem}
+.settings-card h3{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.8rem}
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px}
 .settings-row:last-child{border-bottom:none}
 .settings-key{display:flex;align-items:center;gap:8px;color:var(--text2)}
 .settings-val{color:var(--text);font-family:var(--mono);font-size:12px}
 
-/* ===== MODAL ===== */
-.modal-bg{
-  display:none;position:fixed;inset:0;
-  background:rgba(0,0,0,.7);z-index:300;
-  align-items:center;justify-content:center;
-}
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:300;align-items:center;justify-content:center}
 .modal-bg.open{display:flex}
-.modal{
-  background:var(--bg2);border:1px solid var(--border2);
-  border-radius:12px;padding:1.5rem;width:380px;
-  animation:fadeIn .2s ease;
-}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:1.5rem;width:380px;animation:fadeIn .2s ease}
 .modal-title{font-size:15px;font-weight:700;margin-bottom:1.2rem;display:flex;align-items:center;justify-content:space-between}
 .modal-close{background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;line-height:1}
 .modal-close:hover{color:var(--text)}
 .form-row{margin-bottom:.9rem}
 .form-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px}
-.form-input{
-  width:100%;background:var(--bg3);border:1px solid var(--border);
-  border-radius:7px;padding:8px 11px;color:var(--text);
-  font-family:var(--font);font-size:13px;outline:none;transition:border-color .15s;
-}
+.form-input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:8px 11px;color:var(--text);font-family:var(--font);font-size:13px;outline:none;transition:border-color .15s}
 .form-input:focus{border-color:var(--accent)}
+.form-select{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:8px 11px;color:var(--text);font-family:var(--font);font-size:13px;outline:none;cursor:pointer}
 .type-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
-.type-opt{
-  border:1px solid var(--border);border-radius:8px;padding:10px 6px;
-  text-align:center;cursor:pointer;font-size:11px;color:var(--text2);
-  transition:all .15s;
-}
+.type-opt{border:1px solid var(--border);border-radius:8px;padding:10px 6px;text-align:center;cursor:pointer;font-size:11px;color:var(--text2);transition:all .15s}
 .type-opt:hover{border-color:var(--border2)}
 .type-opt.sel{border-color:var(--accent);color:var(--accent);background:rgba(88,166,255,.08)}
 .type-opt .icon{font-size:18px;margin-bottom:4px}
 .modal-footer{display:flex;gap:8px;margin-top:1.2rem}
-.btn-primary{
-  flex:1;background:var(--accent);color:#0d1117;border:none;
-  border-radius:8px;padding:9px;font-family:var(--font);
-  font-size:13px;font-weight:700;cursor:pointer;transition:opacity .2s;
-}
+.btn-primary{flex:1;background:var(--accent);color:#0d1117;border:none;border-radius:8px;padding:9px;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;transition:opacity .2s}
 .btn-primary:hover{opacity:.85}
-.btn-cancel{
-  background:transparent;border:1px solid var(--border);color:var(--text2);
-  border-radius:8px;padding:9px 16px;font-family:var(--font);font-size:13px;cursor:pointer;
-}
+.btn-danger{flex:1;background:var(--accent3);color:#0d1117;border:none;border-radius:8px;padding:9px;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;transition:opacity .2s}
+.btn-danger:hover{opacity:.85}
+.btn-cancel{background:transparent;border:1px solid var(--border);color:var(--text2);border-radius:8px;padding:9px 16px;font-family:var(--font);font-size:13px;cursor:pointer}
 .btn-cancel:hover{border-color:var(--border2);color:var(--text)}
-.del-btn{
-  background:transparent;border:1px solid var(--border);color:var(--text3);
-  border-radius:5px;padding:3px 8px;font-size:11px;font-family:var(--font);cursor:pointer;
-}
+.del-btn{background:transparent;border:1px solid var(--border);color:var(--text3);border-radius:5px;padding:3px 8px;font-size:11px;font-family:var(--font);cursor:pointer}
 .del-btn:hover{border-color:var(--accent3);color:var(--accent3)}
 
-/* ===== LOGIN ===== */
-#login-screen{
-  min-height:100vh;display:flex;align-items:center;justify-content:center;
-  background:var(--bg);
-}
-.login-box{
-  background:var(--bg2);border:1px solid var(--border);
-  border-radius:14px;padding:2rem 2.2rem;width:360px;
-}
+/* VIEWER NOTICE */
+.viewer-notice{background:rgba(188,140,255,.08);border:1px solid rgba(188,140,255,.25);border-radius:8px;padding:.7rem 1rem;font-size:12px;color:var(--purple);display:flex;align-items:center;gap:8px;margin-bottom:1rem}
+
+/* LOGIN */
+#login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg)}
+.login-box{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:2rem 2.2rem;width:360px}
 .login-logo{display:flex;align-items:center;gap:10px;margin-bottom:2rem;justify-content:center}
 .login-logo .icon{width:40px;height:40px;background:var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center}
 .login-logo .icon i{color:#0d1117;font-size:20px}
@@ -342,34 +197,23 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 .login-logo .text .sub{font-size:11px;color:var(--accent);font-family:var(--mono)}
 .login-field{margin-bottom:.9rem}
 .login-field label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px}
-.login-field input{
-  width:100%;background:var(--bg3);border:1px solid var(--border);
-  border-radius:8px;padding:9px 12px;color:var(--text);
-  font-family:var(--font);font-size:13px;outline:none;transition:border-color .15s;
-}
+.login-field input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:var(--font);font-size:13px;outline:none;transition:border-color .15s}
 .login-field input:focus{border-color:var(--accent)}
-.login-btn{
-  width:100%;background:var(--accent);color:#0d1117;border:none;
-  border-radius:8px;padding:10px;font-family:var(--font);font-size:13px;
-  font-weight:700;cursor:pointer;margin-top:.5rem;letter-spacing:.02em;
-  transition:opacity .2s;
-}
+.login-btn{width:100%;background:var(--accent);color:#0d1117;border:none;border-radius:8px;padding:10px;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;margin-top:.5rem;transition:opacity .2s}
 .login-btn:hover{opacity:.85}
 .login-btn:disabled{opacity:.4;cursor:not-allowed}
 .login-err{color:var(--accent3);font-size:12px;margin-top:8px;text-align:center;min-height:18px}
 .login-hint{font-size:11px;color:var(--text3);text-align:center;margin-top:.8rem}
 
-/* ===== CHIP BADGE ===== */
-.chip-badge{
-  font-size:10px;padding:1px 6px;border-radius:4px;font-family:var(--mono);font-weight:600;
-}
+/* CHIP BADGE */
+.chip-badge{font-size:10px;padding:1px 6px;border-radius:4px;font-family:var(--mono);font-weight:600}
 .chip-badge.esp32{background:rgba(88,166,255,.15);color:var(--accent)}
 .chip-badge.esp8266{background:rgba(188,140,255,.15);color:var(--purple)}
 </style>
 </head>
 <body>
 
-<!-- ===== LOGIN ===== -->
+<!-- LOGIN -->
 <div id="login-screen">
   <div class="login-box">
     <div class="login-logo">
@@ -389,14 +233,12 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
     </div>
     <div class="login-err" id="login-err"></div>
     <button class="login-btn" id="login-btn" onclick="doLogin()">MASUK</button>
-    <p class="login-hint">Hubungkan ke backend Railway Anda</p>
+    <p class="login-hint">admin · viewer — sesuai role masing-masing</p>
   </div>
 </div>
 
-<!-- ===== MAIN APP ===== -->
+<!-- MAIN APP -->
 <div id="main-app" style="display:none">
-
-  <!-- Topbar -->
   <div class="topbar">
     <div class="topbar-left">
       <button class="hamburger" id="hamburger" onclick="toggleSidebar()">
@@ -412,9 +254,10 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
         <div class="ws-dot" id="ws-dot"></div>
         <span id="ws-label">Connecting</span>
       </div>
+      <span class="role-pill" id="role-pill">—</span>
       <div class="user-chip">
         <i class="ti ti-user" style="font-size:13px"></i>
-        <span id="topbar-user">admin</span>
+        <span id="topbar-user">—</span>
       </div>
       <button class="logout-btn" onclick="doLogout()" title="Logout">
         <i class="ti ti-logout" style="font-size:15px"></i>
@@ -422,10 +265,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
     </div>
   </div>
 
-  <!-- Sidebar Overlay -->
   <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
 
-  <!-- Sidebar -->
   <div class="sidebar" id="sidebar">
     <div class="sidebar-inner">
       <div class="nav-section">Menu Utama</div>
@@ -442,6 +283,11 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
       <div class="nav-item" id="nav-logs" onclick="showPage('logs',this)">
         <i class="ti ti-terminal-2"></i> Logs
       </div>
+      <div class="nav-section">Admin</div>
+      <div class="nav-item" id="nav-users" onclick="showPage('users',this)">
+        <i class="ti ti-users"></i> Kelola User
+        <i class="ti ti-lock nav-lock" id="users-lock"></i>
+      </div>
       <div class="nav-section">Sistem</div>
       <div class="nav-item" id="nav-settings" onclick="showPage('settings',this)">
         <i class="ti ti-settings"></i> Settings
@@ -453,150 +299,109 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
     </div>
   </div>
 
-  <!-- Main Content -->
   <div class="main">
 
     <!-- DASHBOARD -->
     <div class="page active" id="page-dashboard">
       <div class="page-header">
-        <h1>Dashboard</h1>
-        <p id="last-update">Memuat data...</p>
+        <div class="page-header-text"><h1>Dashboard</h1><p id="last-update">Memuat data...</p></div>
       </div>
       <div class="stat-grid">
-        <div class="stat-card c-blue">
-          <div class="stat-label">Total Device</div>
-          <div class="stat-val blue" id="s-total">—</div>
-          <div class="stat-sub">terdaftar</div>
-        </div>
-        <div class="stat-card c-green">
-          <div class="stat-label">Online</div>
-          <div class="stat-val green" id="s-online">—</div>
-          <div class="stat-sub">aktif sekarang</div>
-        </div>
-        <div class="stat-card c-red">
-          <div class="stat-label">Offline</div>
-          <div class="stat-val red" id="s-offline">—</div>
-          <div class="stat-sub">tidak merespons</div>
-        </div>
-        <div class="stat-card c-purple">
-          <div class="stat-label">Avg Suhu</div>
-          <div class="stat-val purple" id="s-temp">—</div>
-          <div class="stat-sub">semua sensor</div>
-        </div>
+        <div class="stat-card c-blue"><div class="stat-label">Total Device</div><div class="stat-val blue" id="s-total">—</div><div class="stat-sub">terdaftar</div></div>
+        <div class="stat-card c-green"><div class="stat-label">Online</div><div class="stat-val green" id="s-online">—</div><div class="stat-sub">aktif</div></div>
+        <div class="stat-card c-red"><div class="stat-label">Offline</div><div class="stat-val red" id="s-offline">—</div><div class="stat-sub">tidak merespons</div></div>
+        <div class="stat-card c-purple"><div class="stat-label">Avg Suhu</div><div class="stat-val purple" id="s-temp">—</div><div class="stat-sub">semua sensor</div></div>
       </div>
-      <div class="sec-title">
-        <span>Device Aktif</span>
-        <button class="sec-btn" onclick="showPage('devices',document.getElementById('nav-devices'))">
-          <i class="ti ti-devices" style="font-size:12px"></i> Semua
-        </button>
+      <div class="sec-title"><span>Device Aktif</span>
+        <button class="sec-btn" onclick="showPage('devices',document.getElementById('nav-devices'))"><i class="ti ti-devices" style="font-size:12px"></i> Semua</button>
       </div>
-      <div class="device-grid" id="dash-devices">
-        <div style="color:var(--text3);font-size:13px;padding:.5rem 0">Memuat device...</div>
-      </div>
+      <div class="device-grid" id="dash-devices"></div>
       <div class="sec-title"><span>Log Terbaru</span></div>
       <div class="log-wrap">
-        <div class="log-head">
-          <span>aktivitas sistem</span>
-          <span id="log-count-dash">0 entri</span>
-        </div>
-        <div class="log-body" id="dash-logs">
-          <div style="padding:.8rem 1rem;color:var(--text3);font-size:12px">Belum ada log</div>
-        </div>
+        <div class="log-head"><span>aktivitas sistem</span><span id="log-count-dash">0 entri</span></div>
+        <div class="log-body" id="dash-logs"><div style="padding:.8rem 1rem;color:var(--text3);font-size:12px">Belum ada log</div></div>
       </div>
     </div>
 
     <!-- DEVICES -->
     <div class="page" id="page-devices">
-      <div class="page-header"><h1>Device Manager</h1><p>Kelola semua perangkat IoT</p></div>
+      <div class="page-header"><div class="page-header-text"><h1>Device Manager</h1><p>Kelola semua perangkat IoT</p></div></div>
+      <div id="viewer-notice-devices"></div>
       <div class="device-grid" id="all-devices"></div>
-      <button class="add-card" onclick="openAddModal()">
+      <button class="add-card" id="add-device-btn" onclick="openAddModal()">
         <i class="ti ti-plus" style="font-size:16px"></i> Tambah Device Baru
       </button>
     </div>
 
     <!-- CONTROL -->
     <div class="page" id="page-control">
-      <div class="page-header"><h1>Control Panel</h1><p>Kontrol relay dan GPIO setiap device</p></div>
+      <div class="page-header"><div class="page-header-text"><h1>Control Panel</h1><p>Kontrol relay dan GPIO</p></div></div>
+      <div id="viewer-notice-control"></div>
       <div id="ctrl-panels"></div>
     </div>
 
     <!-- LOGS -->
     <div class="page" id="page-logs">
       <div class="page-header" style="display:flex;align-items:center;justify-content:space-between">
-        <div><h1>System Logs</h1><p>Aktivitas real-time semua perangkat</p></div>
-        <button class="sec-btn" onclick="logs=[];renderLogs()">
-          <i class="ti ti-trash" style="font-size:12px"></i> Clear
-        </button>
+        <div class="page-header-text"><h1>System Logs</h1><p>Aktivitas real-time</p></div>
+        <button class="sec-btn" onclick="logs=[];renderLogs()"><i class="ti ti-trash" style="font-size:12px"></i> Clear</button>
       </div>
       <div class="log-wrap">
-        <div class="log-head">
-          <span>semua aktivitas</span>
-          <span id="log-count-full">0 entri</span>
-        </div>
-        <div class="log-body" id="full-logs">
-          <div style="padding:.8rem 1rem;color:var(--text3);font-size:12px">Belum ada log</div>
+        <div class="log-head"><span>semua aktivitas</span><span id="log-count-full">0 entri</span></div>
+        <div class="log-body" id="full-logs"><div style="padding:.8rem 1rem;color:var(--text3);font-size:12px">Belum ada log</div></div>
+      </div>
+    </div>
+
+    <!-- USERS (admin only) -->
+    <div class="page" id="page-users">
+      <div class="page-header">
+        <div class="page-header-text"><h1>Kelola User</h1><p>Tambah, hapus, dan atur role pengguna</p></div>
+        <button class="sec-btn" id="btn-add-user" onclick="openUserModal()" style="display:none">
+          <i class="ti ti-user-plus" style="font-size:12px"></i> Tambah User
+        </button>
+      </div>
+      <div id="viewer-notice-users"></div>
+      <div class="settings-card" id="user-table-wrap">
+        <div style="overflow-x:auto">
+          <table class="user-table" id="user-table">
+            <thead><tr><th>Username</th><th>Role</th><th>Status</th><th></th></tr></thead>
+            <tbody id="user-tbody"></tbody>
+          </table>
         </div>
       </div>
     </div>
 
     <!-- SETTINGS -->
     <div class="page" id="page-settings">
-      <div class="page-header"><h1>Settings</h1><p>Konfigurasi sistem dan koneksi</p></div>
+      <div class="page-header"><div class="page-header-text"><h1>Settings</h1><p>Konfigurasi sistem</p></div></div>
       <div class="settings-card">
         <h3>Backend API</h3>
-        <div class="settings-row">
-          <span class="settings-key"><i class="ti ti-server" style="color:var(--accent)"></i> Base URL</span>
-          <span class="settings-val" id="set-url">—</span>
-        </div>
-        <div class="settings-row">
-          <span class="settings-key"><i class="ti ti-plug" style="color:var(--accent2)"></i> WebSocket</span>
-          <span class="settings-val" id="set-ws">—</span>
-        </div>
-        <div class="settings-row">
-          <span class="settings-key"><i class="ti ti-refresh" style="color:var(--text3)"></i> Poll interval</span>
-          <span class="settings-val">5 detik</span>
-        </div>
+        <div class="settings-row"><span class="settings-key"><i class="ti ti-server" style="color:var(--accent)"></i> Base URL</span><span class="settings-val" id="set-url">—</span></div>
+        <div class="settings-row"><span class="settings-key"><i class="ti ti-plug" style="color:var(--accent2)"></i> WebSocket</span><span class="settings-val" id="set-ws">—</span></div>
       </div>
       <div class="settings-card">
         <h3>Akun</h3>
-        <div class="settings-row">
-          <span class="settings-key"><i class="ti ti-user"></i> Username</span>
-          <span class="settings-val" id="set-user">—</span>
-        </div>
-        <div class="settings-row">
-          <span class="settings-key"><i class="ti ti-shield-check" style="color:var(--accent2)"></i> Role</span>
-          <span style="background:rgba(63,185,80,.15);color:var(--accent2);font-size:11px;padding:2px 8px;border-radius:8px;font-family:var(--mono)">administrator</span>
-        </div>
+        <div class="settings-row"><span class="settings-key"><i class="ti ti-user"></i> Username</span><span class="settings-val" id="set-user">—</span></div>
+        <div class="settings-row"><span class="settings-key"><i class="ti ti-shield-check" style="color:var(--accent2)"></i> Role</span><span class="role-pill" id="set-role">—</span></div>
       </div>
       <div class="settings-card">
         <h3>Ganti Server URL</h3>
         <div class="form-row" style="margin:0">
           <input type="text" class="form-input" id="server-url-input" placeholder="https://namamu.up.railway.app">
-          <button class="btn-primary" style="margin-top:8px;width:100%;padding:8px" onclick="changeServer()">
-            Simpan &amp; Reconnect
-          </button>
+          <button class="btn-primary" style="margin-top:8px;width:100%;padding:8px" onclick="changeServer()">Simpan &amp; Reconnect</button>
         </div>
       </div>
     </div>
 
-  </div><!-- /main -->
-</div><!-- /main-app -->
+  </div>
+</div>
 
 <!-- Modal Tambah Device -->
 <div class="modal-bg" id="modal-add">
   <div class="modal">
-    <div class="modal-title">
-      <span>Tambah Device</span>
-      <button class="modal-close" onclick="closeModal()">&times;</button>
-    </div>
-    <div class="form-row">
-      <div class="form-label">Device ID (unik)</div>
-      <input type="text" class="form-input" id="m-id" placeholder="esp32-002">
-    </div>
-    <div class="form-row">
-      <div class="form-label">Nama Device</div>
-      <input type="text" class="form-input" id="m-name" placeholder="Kamar Tidur - Sensor">
-    </div>
+    <div class="modal-title"><span>Tambah Device</span><button class="modal-close" onclick="closeModal('modal-add')">&times;</button></div>
+    <div class="form-row"><div class="form-label">Device ID (unik)</div><input type="text" class="form-input" id="m-id" placeholder="esp32-002"></div>
+    <div class="form-row"><div class="form-label">Nama Device</div><input type="text" class="form-input" id="m-name" placeholder="Kamar Tidur"></div>
     <div class="form-row">
       <div class="form-label">Tipe</div>
       <div class="type-grid">
@@ -609,8 +414,29 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn-cancel" onclick="closeModal()">Batal</button>
+      <button class="btn-cancel" onclick="closeModal('modal-add')">Batal</button>
       <button class="btn-primary" onclick="addDeviceLocal()">+ Tambah</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Tambah User -->
+<div class="modal-bg" id="modal-user">
+  <div class="modal">
+    <div class="modal-title"><span>Tambah User</span><button class="modal-close" onclick="closeModal('modal-user')">&times;</button></div>
+    <div class="form-row"><div class="form-label">Username</div><input type="text" class="form-input" id="u-name" placeholder="namauser"></div>
+    <div class="form-row"><div class="form-label">Password</div><input type="password" class="form-input" id="u-pass" placeholder="••••••••"></div>
+    <div class="form-row">
+      <div class="form-label">Role</div>
+      <select class="form-select" id="u-role">
+        <option value="viewer">viewer — hanya lihat, tidak bisa kontrol</option>
+        <option value="admin">admin — akses penuh</option>
+      </select>
+    </div>
+    <div id="u-err" style="color:var(--accent3);font-size:12px;min-height:16px"></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('modal-user')">Batal</button>
+      <button class="btn-primary" onclick="addUser()">Tambah User</button>
     </div>
   </div>
 </div>
@@ -620,20 +446,68 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 let BASE_URL = 'https://projectbelajar-production.up.railway.app';
 // ============================================================
 
-let token = '', username = '', devices = {}, logs = [], ws = null;
-let selTypeVal = 'sensor', pollInterval = null;
+let token='', username='', userRole='', devices={}, logs=[], ws=null;
+let selTypeVal='sensor', pollInterval=null;
 
 const typeIcons  = {sensor:'ti-temperature',relay:'ti-bolt',servo:'ti-rotate',display:'ti-device-desktop',motor:'ti-engine',custom:'ti-puzzle'};
 const typeColors = {sensor:'#58a6ff',relay:'#d29922',servo:'#bc8cff',display:'#3fb950',motor:'#3fb950',custom:'#8b949e'};
 
+// ---- ROLE HELPERS ----
+const isAdmin = () => userRole === 'admin';
+
+function applyRoleUI() {
+  // Tombol tambah device
+  const addBtn = document.getElementById('add-device-btn');
+  if (!isAdmin()) {
+    addBtn.classList.add('locked');
+    addBtn.title = 'Hanya admin yang bisa menambah device';
+  } else {
+    addBtn.classList.remove('locked');
+  }
+
+  // Lock icon di sidebar Users
+  const lock = document.getElementById('users-lock');
+  if (lock) lock.style.display = isAdmin() ? 'none' : '';
+
+  // Tombol tambah user
+  const btnAddUser = document.getElementById('btn-add-user');
+  if (btnAddUser) btnAddUser.style.display = isAdmin() ? 'flex' : 'none';
+
+  // Viewer notice di Control
+  const vc = document.getElementById('viewer-notice-control');
+  if (vc) vc.innerHTML = !isAdmin()
+    ? `<div class="viewer-notice"><i class="ti ti-info-circle"></i> Mode viewer — kontrol relay dinonaktifkan. Hubungi admin untuk mengubah status.</div>`
+    : '';
+
+  // Viewer notice di Devices
+  const vd = document.getElementById('viewer-notice-devices');
+  if (vd) vd.innerHTML = !isAdmin()
+    ? `<div class="viewer-notice"><i class="ti ti-info-circle"></i> Mode viewer — tidak bisa menambah atau menghapus device.</div>`
+    : '';
+
+  // Viewer notice di Users
+  const vu = document.getElementById('viewer-notice-users');
+  if (vu) vu.innerHTML = !isAdmin()
+    ? `<div class="viewer-notice"><i class="ti ti-lock"></i> Halaman ini hanya bisa diakses oleh admin.</div>`
+    : '';
+
+  // Role pill di topbar
+  const rp = document.getElementById('role-pill');
+  if (rp) { rp.textContent = userRole; rp.className = 'role-pill ' + userRole; }
+
+  // Role di settings
+  const sr = document.getElementById('set-role');
+  if (sr) { sr.textContent = userRole; sr.className = 'role-pill ' + userRole; }
+}
+
 // ---- SIDEBAR ----
 function toggleSidebar() {
-  const sb  = document.getElementById('sidebar');
-  const ov  = document.getElementById('sidebar-overlay');
-  const hb  = document.getElementById('hamburger');
-  const open = sb.classList.toggle('open');
-  ov.classList.toggle('open', open);
-  hb.classList.toggle('open', open);
+  const sb=document.getElementById('sidebar');
+  const ov=document.getElementById('sidebar-overlay');
+  const hb=document.getElementById('hamburger');
+  const open=sb.classList.toggle('open');
+  ov.classList.toggle('open',open);
+  hb.classList.toggle('open',open);
 }
 function closeSidebar() {
   document.getElementById('sidebar').classList.remove('open');
@@ -643,137 +517,140 @@ function closeSidebar() {
 
 // ---- AUTH ----
 async function doLogin() {
-  const u = document.getElementById('inp-user').value.trim();
-  const p = document.getElementById('inp-pass').value;
-  const btn = document.getElementById('login-btn');
-  const err = document.getElementById('login-err');
-  err.textContent = '';
-  btn.disabled = true; btn.textContent = 'Menghubungi server...';
+  const u=document.getElementById('inp-user').value.trim();
+  const p=document.getElementById('inp-pass').value;
+  const btn=document.getElementById('login-btn');
+  const err=document.getElementById('login-err');
+  err.textContent=''; btn.disabled=true; btn.textContent='Menghubungi server...';
   try {
-    const res = await fetch(`${BASE_URL}/api/login`, {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({username:u, password:p})
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || 'Login gagal');
-    token = data.token; username = data.username;
-    localStorage.setItem('esp32_token', token);
-    localStorage.setItem('esp32_user', username);
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('main-app').style.display = 'block';
-    document.getElementById('topbar-user').textContent = username;
-    document.getElementById('set-user').textContent = username;
-    document.getElementById('set-url').textContent = BASE_URL;
-    document.getElementById('server-url-input').value = BASE_URL;
-    document.getElementById('sf-url').textContent = 'backend: ' + BASE_URL.replace('https://','');
-    startApp();
-    addLog('System','Login: '+username,'ok');
-  } catch(e) { err.textContent = '⚠ ' + e.message; }
-  btn.disabled = false; btn.textContent = 'MASUK';
+    const res=await fetch(`${BASE_URL}/api/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});
+    const data=await res.json();
+    if(!res.ok) throw new Error(data.detail||'Login gagal');
+    token=data.token; username=data.username; userRole=data.role;
+    localStorage.setItem('esp32_token',token);
+    localStorage.setItem('esp32_user',username);
+    localStorage.setItem('esp32_role',userRole);
+    enterApp();
+  } catch(e) { err.textContent='⚠ '+e.message; }
+  btn.disabled=false; btn.textContent='MASUK';
 }
 
-document.getElementById('inp-pass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
-document.getElementById('inp-user').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+document.getElementById('inp-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+document.getElementById('inp-user').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+
+function enterApp() {
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('main-app').style.display='block';
+  document.getElementById('topbar-user').textContent=username;
+  document.getElementById('set-user').textContent=username;
+  document.getElementById('set-url').textContent=BASE_URL;
+  document.getElementById('server-url-input').value=BASE_URL;
+  document.getElementById('sf-url').textContent='backend: '+BASE_URL.replace('https://','');
+  applyRoleUI();
+  startApp();
+  addLog('System','Login: '+username+' ('+userRole+')','ok');
+}
 
 async function doLogout() {
-  try { await apiFetch('/api/logout',{method:'POST'}); } catch(e){}
-  token = ''; username = '';
-  localStorage.removeItem('esp32_token'); localStorage.removeItem('esp32_user');
+  try{await apiFetch('/api/logout',{method:'POST'});}catch(e){}
+  token='';username='';userRole='';
+  localStorage.removeItem('esp32_token');
+  localStorage.removeItem('esp32_user');
+  localStorage.removeItem('esp32_role');
   if(ws) ws.close();
   clearInterval(pollInterval);
-  devices = {};
-  document.getElementById('main-app').style.display = 'none';
-  document.getElementById('login-screen').style.display = 'flex';
-  document.getElementById('inp-pass').value = '';
+  devices={};
+  document.getElementById('main-app').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('inp-pass').value='';
 }
 
 // ---- API ----
-async function apiFetch(path, opts={}) {
-  const res = await fetch(BASE_URL+path, {
-    ...opts, headers:{'Content-Type':'application/json','Authorization':'Bearer '+token,...(opts.headers||{})},
-    body: opts.body ? JSON.stringify(opts.body) : undefined
+async function apiFetch(path,opts={}) {
+  const res=await fetch(BASE_URL+path,{
+    ...opts,headers:{'Content-Type':'application/json','Authorization':'Bearer '+token,...(opts.headers||{})},
+    body:opts.body?JSON.stringify(opts.body):undefined
   });
-  if(!res.ok) { const d=await res.json(); throw new Error(d.detail||res.statusText); }
+  if(!res.ok){const d=await res.json();throw new Error(d.detail||res.statusText);}
   return res.json();
 }
 
-// ---- WEBSOCKET ----
+// ---- WS ----
 function connectWS() {
-  const wsUrl = BASE_URL.replace('https://','wss://').replace('http://','ws://') + '/ws?token=' + token;
-  document.getElementById('set-ws').textContent = wsUrl.replace('wss://','').split('/ws')[0];
+  const wsUrl=BASE_URL.replace('https://','wss://').replace('http://','ws://')+'/ws?token='+token;
+  document.getElementById('set-ws').textContent=wsUrl.replace('wss://','').split('/ws')[0];
   try {
-    ws = new WebSocket(wsUrl);
-    ws.onopen = () => { setWS(true); addLog('System','WebSocket connected','ok'); };
-    ws.onmessage = (e) => {
-      const msg = JSON.parse(e.data);
-      if(msg.type==='init') { msg.devices.forEach(d=>{ if(d.device_id) devices[d.device_id]=d; }); }
-      else if(msg.type==='sensor'||msg.type==='status') {
-        const id=msg.device_id, d=msg.data;
+    ws=new WebSocket(wsUrl);
+    ws.onopen=()=>{setWS(true);addLog('System','WebSocket connected','ok');};
+    ws.onmessage=(e)=>{
+      const msg=JSON.parse(e.data);
+      if(msg.type==='init'){msg.devices.forEach(d=>{if(d.device_id)devices[d.device_id]=d;});}
+      else if(msg.type==='sensor'||msg.type==='status'){
+        const id=msg.device_id,d=msg.data;
         devices[id]={...devices[id]||{},...d,device_id:id,online:true,last_seen:msg.timestamp};
-        addLog(id, msg.type==='sensor'?`T:${d.temp}°C H:${d.humidity}%`:'Status update','info');
+        addLog(id,msg.type==='sensor'?`T:${d.temp}°C H:${d.humidity}%`:'Status update','info');
       }
       renderAll();
     };
-    ws.onerror = () => setWS(false);
-    ws.onclose = () => { setWS(false); setTimeout(connectWS,5000); };
-  } catch(e) { setWS(false); }
+    ws.onerror=()=>setWS(false);
+    ws.onclose=()=>{setWS(false);setTimeout(connectWS,5000);};
+  } catch(e){setWS(false);}
 }
 
 function setWS(ok) {
-  document.getElementById('ws-dot').className = 'ws-dot' + (ok?'':' off');
-  document.getElementById('ws-label').textContent = ok?'Connected':'Disconnected';
+  document.getElementById('ws-dot').className='ws-dot'+(ok?'':' off');
+  document.getElementById('ws-label').textContent=ok?'Connected':'Disconnected';
 }
 
 // ---- POLL ----
 async function fetchDevices() {
   try {
-    const list = await apiFetch('/api/devices');
-    list.forEach(d=>{ if(d.device_id) devices[d.device_id]=d; });
-    const stats = await apiFetch('/api/stats');
+    const list=await apiFetch('/api/devices');
+    list.forEach(d=>{if(d.device_id)devices[d.device_id]=d;});
+    const stats=await apiFetch('/api/stats');
     updateStats(stats);
     renderAll();
-    const now = new Date().toLocaleTimeString('id-ID');
-    document.getElementById('last-update').textContent = 'Update terakhir: ' + now;
-    document.getElementById('sf-update').textContent = 'sync: ' + now;
-  } catch(e) { addLog('System','Poll error: '+e.message,'error'); }
+    const now=new Date().toLocaleTimeString('id-ID');
+    document.getElementById('last-update').textContent='Update: '+now;
+    document.getElementById('sf-update').textContent='sync: '+now;
+  } catch(e){addLog('System','Poll error: '+e.message,'error');}
 }
 
 function startApp() {
   fetchDevices();
   connectWS();
-  pollInterval = setInterval(fetchDevices, 5000);
+  pollInterval=setInterval(fetchDevices,5000);
 }
 
 // ---- STATS ----
 function updateStats(s) {
-  document.getElementById('s-total').textContent   = s.total;
-  document.getElementById('s-online').textContent  = s.online;
-  document.getElementById('s-offline').textContent = s.offline;
-  document.getElementById('s-temp').textContent    = s.avg_temp ? s.avg_temp+'°C' : '—';
-  document.getElementById('nav-badge').textContent = s.total;
+  document.getElementById('s-total').textContent=s.total;
+  document.getElementById('s-online').textContent=s.online;
+  document.getElementById('s-offline').textContent=s.offline;
+  document.getElementById('s-temp').textContent=s.avg_temp?s.avg_temp+'°C':'—';
+  document.getElementById('nav-badge').textContent=s.total;
 }
 
 // ---- RENDER ----
 function renderAll() {
-  renderDevices('dash-devices', Object.values(devices).slice(0,6), false);
-  renderDevices('all-devices', Object.values(devices), true);
-  const cp = document.getElementById('page-control');
-  if(cp.classList.contains('active')) renderControl();
+  renderDevices('dash-devices',Object.values(devices).slice(0,6),false);
+  renderDevices('all-devices',Object.values(devices),true);
+  if(document.getElementById('page-control').classList.contains('active')) renderControl();
 }
 
 function chipBadge(d) {
   if(!d.chip) return '';
-  const c = (d.chip||'').toLowerCase().includes('8266') ? 'esp8266' : 'esp32';
-  return `<span class="chip-badge ${c}">${d.chip||''}</span>`;
+  const c=(d.chip||'').toLowerCase().includes('8266')?'esp8266':'esp32';
+  return `<span class="chip-badge ${c}">${d.chip}</span>`;
 }
 
-function renderDevices(id, list, showDel) {
-  const el = document.getElementById(id);
-  if(!list.length) { el.innerHTML='<div style="color:var(--text3);font-size:13px;padding:.5rem 0">Tidak ada device. Tambahkan device baru.</div>'; return; }
-  el.innerHTML = list.map(d => {
-    const icon = typeIcons[d.type]||'ti-cpu';
-    const col  = typeColors[d.type]||'#8b949e';
-    const st   = d.online ? 'online' : 'offline';
+function renderDevices(id,list,showDel) {
+  const el=document.getElementById(id);
+  if(!list.length){el.innerHTML='<div style="color:var(--text3);font-size:13px;padding:.5rem 0">Tidak ada device.</div>';return;}
+  el.innerHTML=list.map(d=>{
+    const icon=typeIcons[d.type]||'ti-cpu';
+    const col=typeColors[d.type]||'#8b949e';
+    const st=d.online?'online':'offline';
     return `<div class="device-card ${st}">
       <div class="device-head">
         <div class="device-icon"><i class="ti ${icon}" style="color:${col};font-size:15px"></i></div>
@@ -786,27 +663,24 @@ function renderDevices(id, list, showDel) {
         <div class="metric"><div class="val">${d.humidity!=null?d.humidity+'%':'—'}</div><div class="key">Humid</div></div>
         <div class="metric"><div class="val">${d.uptime!=null?fmtUp(d.uptime):'—'}</div><div class="key">Uptime</div></div>
       </div>
-      ${showDel?`<div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border)">
+      ${showDel && isAdmin()?`<div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border)">
         <button class="del-btn" onclick="removeDevice('${d.device_id||''}')"><i class="ti ti-trash" style="font-size:11px"></i> Hapus</button>
       </div>`:''}
     </div>`;
   }).join('');
 }
 
-function fmtUp(s) {
-  if(s<60) return s+'s';
-  if(s<3600) return Math.floor(s/60)+'m';
-  return Math.floor(s/3600)+'h';
-}
+function fmtUp(s){if(s<60)return s+'s';if(s<3600)return Math.floor(s/60)+'m';return Math.floor(s/3600)+'h';}
 
 function renderControl() {
-  const el = document.getElementById('ctrl-panels');
-  const list = Object.values(devices);
-  if(!list.length) { el.innerHTML='<div style="color:var(--text3);font-size:13px">Tidak ada device</div>'; return; }
-  el.innerHTML = list.map(d => {
-    const icon = typeIcons[d.type]||'ti-cpu';
-    const col  = typeColors[d.type]||'#8b949e';
-    const id   = d.device_id||'';
+  const el=document.getElementById('ctrl-panels');
+  const list=Object.values(devices);
+  if(!list.length){el.innerHTML='<div style="color:var(--text3);font-size:13px">Tidak ada device</div>';return;}
+  el.innerHTML=list.map(d=>{
+    const icon=typeIcons[d.type]||'ti-cpu';
+    const col=typeColors[d.type]||'#8b949e';
+    const id=d.device_id||'';
+    const locked=!isAdmin();
     return `<div class="ctrl-card">
       <div class="ctrl-head">
         <div class="ctrl-title">
@@ -820,15 +694,16 @@ function renderControl() {
       </div>
       <div class="toggle-row">
         <span class="toggle-label"><i class="ti ti-bolt" style="color:var(--warn);font-size:14px"></i> Relay 1</span>
-        <div class="toggle ${d.relay1?'on':''}" onclick="toggleRelay('${id}',1,this)"></div>
+        <div class="toggle ${d.relay1?'on':''} ${locked?'locked':''}" onclick="${locked?'':'toggleRelay(\''+id+'\',1,this)'}"></div>
       </div>
       <div class="toggle-row">
         <span class="toggle-label"><i class="ti ti-bolt" style="color:var(--warn);font-size:14px"></i> Relay 2</span>
-        <div class="toggle ${d.relay2?'on':''}" onclick="toggleRelay('${id}',2,this)"></div>
+        <div class="toggle ${d.relay2?'on':''} ${locked?'locked':''}" onclick="${locked?'':'toggleRelay(\''+id+'\',2,this)'}"></div>
       </div>
       <div class="toggle-row">
         <span class="toggle-label"><i class="ti ti-refresh" style="color:var(--accent);font-size:14px"></i> Restart Device</span>
-        <button class="del-btn" onclick="sendCmd('${id}','restart')"><i class="ti ti-refresh" style="font-size:11px"></i> Restart</button>
+        ${isAdmin()?`<button class="del-btn" onclick="sendCmd('${id}','restart')"><i class="ti ti-refresh" style="font-size:11px"></i> Restart</button>`
+        :`<span style="font-size:11px;color:var(--text3)">—</span>`}
       </div>
       <div style="margin-top:10px;font-size:12px;color:var(--text3);font-family:var(--mono)">
         Sensor: <span style="color:var(--accent)">${d.online?(d.temp||'—')+'°C / '+(d.humidity||'—')+'% RH':'offline'}</span>
@@ -838,110 +713,160 @@ function renderControl() {
   }).join('');
 }
 
-async function toggleRelay(id, pin, el) {
-  const state = !el.classList.contains('on');
+async function toggleRelay(id,pin,el) {
+  if(!isAdmin()){addLog('System','Akses ditolak — hanya admin','error');return;}
+  const state=!el.classList.contains('on');
   try {
     await apiFetch('/api/command',{method:'POST',body:{device_id:id,action:'set_relay',pin,state}});
     el.classList.toggle('on',state);
     if(devices[id]) devices[id]['relay'+pin]=state;
     addLog(id,'Relay '+pin+' → '+(state?'ON':'OFF'),'ok');
-  } catch(e) { addLog(id,'Error: '+e.message,'error'); }
+  } catch(e){addLog(id,'Error: '+e.message,'error');}
 }
 
-async function sendCmd(id, action) {
+async function sendCmd(id,action) {
+  if(!isAdmin()&&!['ping','get_sensor'].includes(action)){addLog('System','Akses ditolak','error');return;}
   try {
     await apiFetch('/api/command',{method:'POST',body:{device_id:id,action}});
     addLog(id,'Command: '+action,'ok');
-  } catch(e) { addLog(id,'Error: '+e.message,'error'); }
+  } catch(e){addLog(id,'Error: '+e.message,'error');}
 }
 
 // ---- DEVICES ----
-function openAddModal() { document.getElementById('modal-add').classList.add('open'); }
-function closeModal() {
-  document.getElementById('modal-add').classList.remove('open');
-  document.getElementById('m-id').value = '';
-  document.getElementById('m-name').value = '';
+function openAddModal() {
+  if(!isAdmin()){addLog('System','Akses ditolak — hanya admin','error');return;}
+  document.getElementById('modal-add').classList.add('open');
 }
-function selType(el) {
-  document.querySelectorAll('.type-opt').forEach(o=>o.classList.remove('sel'));
-  el.classList.add('sel'); selTypeVal = el.dataset.t;
-}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function selType(el){document.querySelectorAll('.type-opt').forEach(o=>o.classList.remove('sel'));el.classList.add('sel');selTypeVal=el.dataset.t;}
 function addDeviceLocal() {
-  const id   = document.getElementById('m-id').value.trim();
-  const name = document.getElementById('m-name').value.trim();
-  if(!id||!name) { alert('Device ID dan nama wajib diisi'); return; }
-  if(devices[id]) { alert('Device ID sudah ada'); return; }
-  devices[id] = {device_id:id,name,type:selTypeVal,online:false};
-  closeModal(); renderAll();
+  if(!isAdmin()) return;
+  const id=document.getElementById('m-id').value.trim();
+  const name=document.getElementById('m-name').value.trim();
+  if(!id||!name){alert('Device ID dan nama wajib diisi');return;}
+  if(devices[id]){alert('Device ID sudah ada');return;}
+  devices[id]={device_id:id,name,type:selTypeVal,online:false};
+  closeModal('modal-add');
+  document.getElementById('m-id').value='';
+  document.getElementById('m-name').value='';
+  renderAll();
   addLog(id,'Device ditambahkan','info');
 }
 function removeDevice(id) {
-  const d = devices[id];
-  if(!confirm('Hapus device "' + (d?.name||id) + '"?')) return;
+  if(!isAdmin()){addLog('System','Akses ditolak','error');return;}
+  const d=devices[id];
+  if(!confirm('Hapus device "'+(d?.name||id)+'"?')) return;
   delete devices[id]; renderAll();
   addLog(id,'Device dihapus','warn');
 }
 
+// ---- USER MANAGEMENT ----
+function openUserModal() {
+  if(!isAdmin()) return;
+  document.getElementById('u-name').value='';
+  document.getElementById('u-pass').value='';
+  document.getElementById('u-role').value='viewer';
+  document.getElementById('u-err').textContent='';
+  document.getElementById('modal-user').classList.add('open');
+}
+
+async function loadUsers() {
+  if(!isAdmin()){
+    document.getElementById('user-tbody').innerHTML='';
+    return;
+  }
+  try {
+    const users=await apiFetch('/api/users');
+    document.getElementById('user-tbody').innerHTML=users.map(u=>`
+      <tr>
+        <td><strong>${u.username}</strong> ${u.username===username?'<span style="font-size:10px;color:var(--text3)">(Anda)</span>':''}</td>
+        <td><span class="role-pill ${u.role}">${u.role}</span></td>
+        <td><span style="font-size:11px;color:var(--accent2);font-family:var(--mono)">aktif</span></td>
+        <td>
+          ${u.username!==username?`<button class="del-btn" onclick="deleteUser('${u.username}')"><i class="ti ti-trash" style="font-size:11px"></i></button>`:'—'}
+        </td>
+      </tr>`).join('');
+  } catch(e){addLog('System','Load users error: '+e.message,'error');}
+}
+
+async function addUser() {
+  const name=document.getElementById('u-name').value.trim();
+  const pass=document.getElementById('u-pass').value;
+  const role=document.getElementById('u-role').value;
+  const errEl=document.getElementById('u-err');
+  if(!name||!pass){errEl.textContent='Username dan password wajib diisi';return;}
+  try {
+    await apiFetch('/api/users',{method:'POST',body:{username:name,password:pass,role}});
+    closeModal('modal-user');
+    addLog('System','User ditambahkan: '+name+' ('+role+')','ok');
+    loadUsers();
+  } catch(e){errEl.textContent='⚠ '+e.message;}
+}
+
+async function deleteUser(uname) {
+  if(!confirm('Hapus user "'+uname+'"?')) return;
+  try {
+    await apiFetch('/api/users/'+uname,{method:'DELETE'});
+    addLog('System','User dihapus: '+uname,'warn');
+    loadUsers();
+  } catch(e){addLog('System','Error: '+e.message,'error');}
+}
+
 // ---- LOGS ----
-function addLog(dev, msg, level='info') {
-  const t = new Date().toLocaleTimeString('id-ID');
+function addLog(dev,msg,level='info') {
+  const t=new Date().toLocaleTimeString('id-ID');
   logs.unshift({time:t,dev,msg,level});
   if(logs.length>200) logs.pop();
   renderLogs();
 }
 function renderLogs() {
-  const html = (list) => list.length ? list.map(l=>
-    `<div class="log-row">
+  const html=(list)=>list.length?list.map(l=>`
+    <div class="log-row">
       <span class="log-time">${l.time}</span>
       <span class="log-dev">${l.dev}</span>
       <span class="log-msg">${l.msg}</span>
       <span class="log-lvl ${l.level}">${l.level}</span>
-    </div>`).join('') : '<div style="padding:.8rem 1rem;color:var(--text3);font-size:12px">Belum ada log</div>';
-  document.getElementById('dash-logs').innerHTML = html(logs.slice(0,6));
-  document.getElementById('full-logs').innerHTML = html(logs);
-  document.getElementById('log-count-dash').textContent = logs.length + ' entri';
-  document.getElementById('log-count-full').textContent = logs.length + ' entri';
+    </div>`).join(''):'<div style="padding:.8rem 1rem;color:var(--text3);font-size:12px">Belum ada log</div>';
+  document.getElementById('dash-logs').innerHTML=html(logs.slice(0,6));
+  document.getElementById('full-logs').innerHTML=html(logs);
+  document.getElementById('log-count-dash').textContent=logs.length+' entri';
+  document.getElementById('log-count-full').textContent=logs.length+' entri';
 }
 
 // ---- NAVIGATION ----
-function showPage(name, el) {
+function showPage(name,el) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('page-'+name).classList.add('active');
   if(el) el.classList.add('active');
   if(name==='control') renderControl();
+  if(name==='users') loadUsers();
   closeSidebar();
 }
 
 // ---- SETTINGS ----
 function changeServer() {
-  const url = document.getElementById('server-url-input').value.trim().replace(/\/$/,'');
+  const url=document.getElementById('server-url-input').value.trim().replace(/\/$/,'');
   if(!url) return;
-  BASE_URL = url;
-  localStorage.setItem('esp32_server', url);
+  BASE_URL=url;
+  localStorage.setItem('esp32_server',url);
   if(ws) ws.close();
   clearInterval(pollInterval);
   connectWS();
-  pollInterval = setInterval(fetchDevices, 5000);
-  document.getElementById('set-url').textContent = url;
-  document.getElementById('sf-url').textContent = 'backend: ' + url.replace('https://','');
-  addLog('System','Server URL: '+url,'info');
+  pollInterval=setInterval(fetchDevices,5000);
+  document.getElementById('set-url').textContent=url;
+  document.getElementById('sf-url').textContent='backend: '+url.replace('https://','');
+  addLog('System','Server: '+url,'info');
 }
 
 // ---- AUTO LOGIN ----
-window.addEventListener('load', () => {
-  const t = localStorage.getItem('esp32_token');
-  const u = localStorage.getItem('esp32_user');
-  if(t && u) {
-    token = t; username = u;
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('main-app').style.display = 'block';
-    document.getElementById('topbar-user').textContent = u;
-    document.getElementById('set-user').textContent = u;
-    document.getElementById('set-url').textContent = BASE_URL;
-    document.getElementById('server-url-input').value = BASE_URL;
-    document.getElementById('sf-url').textContent = 'backend: ' + BASE_URL.replace('https://','');
-    startApp();
+window.addEventListener('load',()=>{
+  const t=localStorage.getItem('esp32_token');
+  const u=localStorage.getItem('esp32_user');
+  const r=localStorage.getItem('esp32_role');
+  if(t&&u){
+    token=t; username=u; userRole=r||'viewer';
+    enterApp();
   }
 });
 </script>
