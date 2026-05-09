@@ -7,13 +7,15 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
   --bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--bg4:#30363d;
-  --card:#161b22;--border:#30363d;--border2:#484f58;
+  --border:#30363d;--border2:#484f58;
   --accent:#58a6ff;--accent2:#3fb950;--accent3:#f78166;
-  --warn:#d29922;--purple:#bc8cff;
+  --warn:#d29922;--purple:#bc8cff;--cyan:#39d353;
   --text:#e6edf3;--text2:#8b949e;--text3:#484f58;
   --font:'Space Grotesk',sans-serif;--mono:'JetBrains Mono',monospace;
   --sidebar-w:260px;--topbar-h:56px;
@@ -32,8 +34,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 .brand{display:flex;align-items:center;gap:8px}
 .brand-icon{width:28px;height:28px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center}
 .brand-icon i{color:#0d1117;font-size:15px}
-.brand-name{font-size:15px;font-weight:600}
-.brand-name span{color:var(--accent)}
+.brand-name{font-size:15px;font-weight:600}.brand-name span{color:var(--accent)}
 .topbar-right{display:flex;align-items:center;gap:8px}
 .ws-pill{display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:20px;border:1px solid var(--border);background:var(--bg3);font-size:11px;font-family:var(--mono);color:var(--text2)}
 .ws-dot{width:6px;height:6px;border-radius:50%;background:var(--accent2);animation:pulse 2s infinite}
@@ -58,7 +59,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 .nav-item.active{color:var(--accent);border-left-color:var(--accent);background:rgba(88,166,255,.08)}
 .nav-item i{font-size:16px;width:20px;text-align:center;flex-shrink:0}
 .nav-item .badge{margin-left:auto;font-size:10px;padding:1px 6px;border-radius:10px;background:var(--accent);color:#0d1117;font-weight:600}
-.nav-item.disabled{opacity:.35;cursor:not-allowed;pointer-events:none}
 .nav-lock{margin-left:auto;font-size:12px;color:var(--text3)}
 .sidebar-footer{padding:1rem 1.2rem;border-top:1px solid var(--border)}
 .sidebar-footer-info{font-size:11px;color:var(--text3);font-family:var(--mono)}
@@ -68,21 +68,23 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 .page{display:none}
 .page.active{display:block;animation:fadeIn .2s ease}
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-.page-header{margin-bottom:1.5rem;display:flex;align-items:flex-start;justify-content:space-between}
+.page-header{margin-bottom:1.5rem;display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:8px}
 .page-header-text h1{font-size:20px;font-weight:700;letter-spacing:-.01em}
 .page-header-text p{font-size:13px;color:var(--text2);margin-top:4px}
+.page-actions{display:flex;gap:8px;flex-wrap:wrap}
 
 /* STAT CARDS */
-.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:1.5rem}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:1.5rem}
 .stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:.9rem 1rem;position:relative;overflow:hidden}
 .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
 .stat-card.c-blue::before{background:var(--accent)}
 .stat-card.c-green::before{background:var(--accent2)}
 .stat-card.c-red::before{background:var(--accent3)}
 .stat-card.c-purple::before{background:var(--purple)}
+.stat-card.c-cyan::before{background:var(--cyan)}
 .stat-label{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
-.stat-val{font-size:26px;font-weight:700;font-family:var(--mono);line-height:1}
-.stat-val.blue{color:var(--accent)}.stat-val.green{color:var(--accent2)}.stat-val.red{color:var(--text3)}.stat-val.purple{color:var(--purple)}
+.stat-val{font-size:24px;font-weight:700;font-family:var(--mono);line-height:1}
+.stat-val.blue{color:var(--accent)}.stat-val.green{color:var(--accent2)}.stat-val.red{color:var(--text3)}.stat-val.purple{color:var(--purple)}.stat-val.cyan{color:var(--cyan)}
 .stat-sub{font-size:11px;color:var(--text3);margin-top:4px}
 
 /* SEC TITLE */
@@ -90,12 +92,16 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 .sec-btn{font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;font-family:var(--font);display:flex;align-items:center;gap:5px}
 .sec-btn:hover{border-color:var(--border2);color:var(--text)}
 
+/* CARD BASE */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1rem;margin-bottom:.8rem}
+
 /* DEVICE CARDS */
 .device-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:1.5rem}
 .device-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1rem;transition:border-color .2s,transform .15s;border-left:3px solid var(--border)}
 .device-card:hover{border-color:var(--border2);transform:translateY(-1px)}
 .device-card.online{border-left-color:var(--accent2)}
 .device-card.offline{border-left-color:var(--border)}
+.device-card.gps-tracker{border-left-color:var(--cyan)}
 .device-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .device-icon{width:32px;height:32px;border-radius:7px;background:var(--bg3);display:flex;align-items:center;justify-content:center}
 .status-pill{font-size:10px;font-weight:600;padding:2px 7px;border-radius:8px;font-family:var(--mono)}
@@ -108,23 +114,45 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 .metric .val{font-size:13px;font-weight:600;font-family:var(--mono)}
 .metric .key{font-size:10px;color:var(--text3)}
 
+/* CHART */
+.chart-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1rem;margin-bottom:1rem}
+.chart-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem}
+.chart-title{font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em}
+canvas.chart{width:100%!important;height:160px!important}
+
 /* CONTROL */
 .ctrl-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1.1rem;margin-bottom:.8rem}
 .ctrl-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;padding-bottom:.8rem;border-bottom:1px solid var(--border)}
 .ctrl-title{display:flex;align-items:center;gap:10px}
-.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)}
-.toggle-row:last-of-type{border-bottom:none}
-.toggle-label{display:flex;align-items:center;gap:8px;font-size:13px}
+.pin-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)}
+.pin-row:last-of-type{border-bottom:none}
+.pin-label{display:flex;align-items:center;gap:8px;font-size:13px;flex:1}
+.pin-type-badge{font-size:10px;font-family:var(--mono);padding:1px 6px;border-radius:4px;background:var(--bg3);color:var(--text3)}
 .toggle{width:38px;height:21px;border-radius:11px;background:var(--bg3);border:1px solid var(--border);cursor:pointer;position:relative;transition:all .2s;flex-shrink:0}
 .toggle.on{background:var(--accent2);border-color:var(--accent2)}
 .toggle::after{content:'';position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;background:#fff;transition:transform .2s}
 .toggle.on::after{transform:translateX(17px)}
 .toggle.locked{opacity:.4;cursor:not-allowed}
+.slider-wrap{display:flex;align-items:center;gap:8px;flex:1}
+.pin-slider{flex:1;accent-color:var(--accent)}
+.pin-val{font-family:var(--mono);font-size:12px;color:var(--text2);width:36px;text-align:right}
+
+/* PIN EDITOR */
+.pin-editor-row{display:grid;grid-template-columns:60px 1fr 100px auto;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)}
+.pin-editor-row:last-of-type{border-bottom:none}
+
+/* GPS MAP */
+#gps-map{height:400px;border-radius:10px;overflow:hidden;border:1px solid var(--border)}
+.gps-info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:1rem}
+.gps-info-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:.7rem;text-align:center}
+.gps-info-val{font-size:16px;font-weight:700;font-family:var(--mono);color:var(--cyan)}
+.gps-info-key{font-size:11px;color:var(--text3);margin-top:2px}
+.tracker-select{background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:6px 10px;color:var(--text);font-family:var(--font);font-size:13px;outline:none;cursor:pointer}
 
 /* LOGS */
 .log-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden}
 .log-head{display:flex;align-items:center;justify-content:space-between;padding:.7rem 1rem;border-bottom:1px solid var(--border);font-size:11px;color:var(--text3);font-family:var(--mono)}
-.log-body{padding:.3rem 0}
+.log-body{padding:.3rem 0;max-height:400px;overflow-y:auto}
 .log-row{display:flex;gap:10px;padding:5px 1rem;font-size:11px;font-family:var(--mono);border-bottom:1px solid var(--border)}
 .log-row:last-child{border-bottom:none}
 .log-row:hover{background:var(--bg3)}
@@ -137,35 +165,38 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 .log-lvl.warn{background:rgba(210,153,34,.15);color:var(--warn)}
 .log-lvl.error{background:rgba(247,129,102,.15);color:var(--accent3)}
 
-/* ADD BTN */
-.add-card{border:1.5px dashed var(--border2);border-radius:10px;padding:1.2rem;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;color:var(--text3);font-size:13px;transition:all .2s;background:transparent;width:100%;font-family:var(--font)}
-.add-card:hover{border-color:var(--accent);color:var(--accent);background:rgba(88,166,255,.04)}
-.add-card.locked{opacity:.3;cursor:not-allowed;pointer-events:none}
-
-/* USER MANAGEMENT */
-.user-table{width:100%;border-collapse:collapse}
-.user-table th{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;padding:8px 1rem;text-align:left;border-bottom:1px solid var(--border)}
-.user-table td{padding:10px 1rem;font-size:13px;border-bottom:1px solid var(--border)}
-.user-table tr:last-child td{border-bottom:none}
-.user-table tr:hover td{background:var(--bg3)}
-
 /* SETTINGS */
 .settings-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1.1rem;margin-bottom:.8rem}
 .settings-card h3{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.8rem}
 .settings-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px}
 .settings-row:last-child{border-bottom:none}
 .settings-key{display:flex;align-items:center;gap:8px;color:var(--text2)}
-.settings-val{color:var(--text);font-family:var(--mono);font-size:12px}
+
+/* ADD BTN */
+.add-card{border:1.5px dashed var(--border2);border-radius:10px;padding:1rem;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;color:var(--text3);font-size:13px;transition:all .2s;background:transparent;width:100%;font-family:var(--font)}
+.add-card:hover{border-color:var(--accent);color:var(--accent);background:rgba(88,166,255,.04)}
+.add-card.locked{opacity:.3;cursor:not-allowed;pointer-events:none}
+
+/* USER TABLE */
+.user-table{width:100%;border-collapse:collapse}
+.user-table th{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;padding:8px 1rem;text-align:left;border-bottom:1px solid var(--border)}
+.user-table td{padding:10px 1rem;font-size:13px;border-bottom:1px solid var(--border)}
+.user-table tr:last-child td{border-bottom:none}
+.user-table tr:hover td{background:var(--bg3)}
+
+/* NOTICE */
+.notice{background:rgba(188,140,255,.08);border:1px solid rgba(188,140,255,.25);border-radius:8px;padding:.7rem 1rem;font-size:12px;color:var(--purple);display:flex;align-items:center;gap:8px;margin-bottom:1rem}
+.notice.info{background:rgba(88,166,255,.08);border-color:rgba(88,166,255,.25);color:var(--accent)}
 
 /* MODAL */
-.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:300;align-items:center;justify-content:center}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:300;align-items:center;justify-content:center}
 .modal-bg.open{display:flex}
-.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:1.5rem;width:380px;animation:fadeIn .2s ease}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:1.5rem;width:420px;max-width:95vw;animation:fadeIn .2s ease;max-height:90vh;overflow-y:auto}
 .modal-title{font-size:15px;font-weight:700;margin-bottom:1.2rem;display:flex;align-items:center;justify-content:space-between}
 .modal-close{background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;line-height:1}
 .modal-close:hover{color:var(--text)}
 .form-row{margin-bottom:.9rem}
-.form-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px}
+.form-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px;display:block}
 .form-input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:8px 11px;color:var(--text);font-family:var(--font);font-size:13px;outline:none;transition:border-color .15s}
 .form-input:focus{border-color:var(--accent)}
 .form-select{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:8px 11px;color:var(--text);font-family:var(--font);font-size:13px;outline:none;cursor:pointer}
@@ -177,15 +208,14 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 .modal-footer{display:flex;gap:8px;margin-top:1.2rem}
 .btn-primary{flex:1;background:var(--accent);color:#0d1117;border:none;border-radius:8px;padding:9px;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;transition:opacity .2s}
 .btn-primary:hover{opacity:.85}
-.btn-danger{flex:1;background:var(--accent3);color:#0d1117;border:none;border-radius:8px;padding:9px;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;transition:opacity .2s}
-.btn-danger:hover{opacity:.85}
+.btn-danger{background:var(--accent3);color:#0d1117;border:none;border-radius:8px;padding:9px 14px;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer}
 .btn-cancel{background:transparent;border:1px solid var(--border);color:var(--text2);border-radius:8px;padding:9px 16px;font-family:var(--font);font-size:13px;cursor:pointer}
 .btn-cancel:hover{border-color:var(--border2);color:var(--text)}
 .del-btn{background:transparent;border:1px solid var(--border);color:var(--text3);border-radius:5px;padding:3px 8px;font-size:11px;font-family:var(--font);cursor:pointer}
 .del-btn:hover{border-color:var(--accent3);color:var(--accent3)}
-
-/* VIEWER NOTICE */
-.viewer-notice{background:rgba(188,140,255,.08);border:1px solid rgba(188,140,255,.25);border-radius:8px;padding:.7rem 1rem;font-size:12px;color:var(--purple);display:flex;align-items:center;gap:8px;margin-bottom:1rem}
+.chip-badge{font-size:10px;padding:1px 6px;border-radius:4px;font-family:var(--mono);font-weight:600}
+.chip-badge.esp32{background:rgba(88,166,255,.15);color:var(--accent)}
+.chip-badge.esp8266{background:rgba(188,140,255,.15);color:var(--purple)}
 
 /* LOGIN */
 #login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg)}
@@ -204,11 +234,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 .login-btn:disabled{opacity:.4;cursor:not-allowed}
 .login-err{color:var(--accent3);font-size:12px;margin-top:8px;text-align:center;min-height:18px}
 .login-hint{font-size:11px;color:var(--text3);text-align:center;margin-top:.8rem}
-
-/* CHIP BADGE */
-.chip-badge{font-size:10px;padding:1px 6px;border-radius:4px;font-family:var(--mono);font-weight:600}
-.chip-badge.esp32{background:rgba(88,166,255,.15);color:var(--accent)}
-.chip-badge.esp8266{background:rgba(188,140,255,.15);color:var(--purple)}
 </style>
 </head>
 <body>
@@ -218,22 +243,13 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
   <div class="login-box">
     <div class="login-logo">
       <div class="icon"><i class="ti ti-cpu"></i></div>
-      <div class="text">
-        <div class="name">ESP32 <span style="color:var(--accent)">Hub</span></div>
-        <div class="sub">IoT Control Center</div>
-      </div>
+      <div class="text"><div class="name">ESP32 <span style="color:var(--accent)">Hub</span></div><div class="sub">IoT Control Center v3</div></div>
     </div>
-    <div class="login-field">
-      <label>Username</label>
-      <input type="text" id="inp-user" placeholder="admin" autocomplete="username">
-    </div>
-    <div class="login-field">
-      <label>Password</label>
-      <input type="password" id="inp-pass" placeholder="••••••••" autocomplete="current-password">
-    </div>
+    <div class="login-field"><label>Username</label><input type="text" id="inp-user" placeholder="admin" autocomplete="username"></div>
+    <div class="login-field"><label>Password</label><input type="password" id="inp-pass" placeholder="••••••••" autocomplete="current-password"></div>
     <div class="login-err" id="login-err"></div>
     <button class="login-btn" id="login-btn" onclick="doLogin()">MASUK</button>
-    <p class="login-hint">admin · viewer — sesuai role masing-masing</p>
+    <p class="login-hint">admin / viewer — sesuai role masing-masing</p>
   </div>
 </div>
 
@@ -241,57 +257,30 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 <div id="main-app" style="display:none">
   <div class="topbar">
     <div class="topbar-left">
-      <button class="hamburger" id="hamburger" onclick="toggleSidebar()">
-        <span></span><span></span><span></span>
-      </button>
-      <div class="brand">
-        <div class="brand-icon"><i class="ti ti-cpu"></i></div>
-        <div class="brand-name">ESP32 <span>Hub</span></div>
-      </div>
+      <button class="hamburger" id="hamburger" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
+      <div class="brand"><div class="brand-icon"><i class="ti ti-cpu"></i></div><div class="brand-name">ESP32 <span>Hub</span></div></div>
     </div>
     <div class="topbar-right">
-      <div class="ws-pill">
-        <div class="ws-dot" id="ws-dot"></div>
-        <span id="ws-label">Connecting</span>
-      </div>
+      <div class="ws-pill"><div class="ws-dot" id="ws-dot"></div><span id="ws-label">Connecting</span></div>
       <span class="role-pill" id="role-pill">—</span>
-      <div class="user-chip">
-        <i class="ti ti-user" style="font-size:13px"></i>
-        <span id="topbar-user">—</span>
-      </div>
-      <button class="logout-btn" onclick="doLogout()" title="Logout">
-        <i class="ti ti-logout" style="font-size:15px"></i>
-      </button>
+      <div class="user-chip"><i class="ti ti-user" style="font-size:13px"></i><span id="topbar-user">—</span></div>
+      <button class="logout-btn" onclick="doLogout()" title="Logout"><i class="ti ti-logout" style="font-size:15px"></i></button>
     </div>
   </div>
 
   <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
-
   <div class="sidebar" id="sidebar">
     <div class="sidebar-inner">
       <div class="nav-section">Menu Utama</div>
-      <div class="nav-item active" id="nav-dashboard" onclick="showPage('dashboard',this)">
-        <i class="ti ti-layout-dashboard"></i> Dashboard
-      </div>
-      <div class="nav-item" id="nav-devices" onclick="showPage('devices',this)">
-        <i class="ti ti-cpu"></i> Devices
-        <span class="badge" id="nav-badge">0</span>
-      </div>
-      <div class="nav-item" id="nav-control" onclick="showPage('control',this)">
-        <i class="ti ti-adjustments-horizontal"></i> Control
-      </div>
-      <div class="nav-item" id="nav-logs" onclick="showPage('logs',this)">
-        <i class="ti ti-terminal-2"></i> Logs
-      </div>
+      <div class="nav-item active" id="nav-dashboard" onclick="showPage('dashboard',this)"><i class="ti ti-layout-dashboard"></i>Dashboard</div>
+      <div class="nav-item" id="nav-devices" onclick="showPage('devices',this)"><i class="ti ti-cpu"></i>Devices<span class="badge" id="nav-badge">0</span></div>
+      <div class="nav-item" id="nav-control" onclick="showPage('control',this)"><i class="ti ti-adjustments-horizontal"></i>Control Panel</div>
+      <div class="nav-item" id="nav-gps" onclick="showPage('gps',this)"><i class="ti ti-map-pin"></i>GPS Tracker</div>
+      <div class="nav-item" id="nav-logs" onclick="showPage('logs',this)"><i class="ti ti-terminal-2"></i>Logs</div>
       <div class="nav-section">Admin</div>
-      <div class="nav-item" id="nav-users" onclick="showPage('users',this)">
-        <i class="ti ti-users"></i> Kelola User
-        <i class="ti ti-lock nav-lock" id="users-lock"></i>
-      </div>
+      <div class="nav-item" id="nav-users" onclick="showPage('users',this)"><i class="ti ti-users"></i>Kelola User<i class="ti ti-lock nav-lock" id="users-lock"></i></div>
       <div class="nav-section">Sistem</div>
-      <div class="nav-item" id="nav-settings" onclick="showPage('settings',this)">
-        <i class="ti ti-settings"></i> Settings
-      </div>
+      <div class="nav-item" id="nav-settings" onclick="showPage('settings',this)"><i class="ti ti-settings"></i>Settings</div>
     </div>
     <div class="sidebar-footer">
       <div class="sidebar-footer-info" id="sf-url">backend: —</div>
@@ -303,17 +292,25 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 
     <!-- DASHBOARD -->
     <div class="page active" id="page-dashboard">
-      <div class="page-header">
-        <div class="page-header-text"><h1>Dashboard</h1><p id="last-update">Memuat data...</p></div>
-      </div>
+      <div class="page-header"><div class="page-header-text"><h1>Dashboard</h1><p id="last-update">Memuat data...</p></div></div>
       <div class="stat-grid">
         <div class="stat-card c-blue"><div class="stat-label">Total Device</div><div class="stat-val blue" id="s-total">—</div><div class="stat-sub">terdaftar</div></div>
         <div class="stat-card c-green"><div class="stat-label">Online</div><div class="stat-val green" id="s-online">—</div><div class="stat-sub">aktif</div></div>
         <div class="stat-card c-red"><div class="stat-label">Offline</div><div class="stat-val red" id="s-offline">—</div><div class="stat-sub">tidak merespons</div></div>
         <div class="stat-card c-purple"><div class="stat-label">Avg Suhu</div><div class="stat-val purple" id="s-temp">—</div><div class="stat-sub">semua sensor</div></div>
+        <div class="stat-card c-cyan"><div class="stat-label">GPS Tracker</div><div class="stat-val cyan" id="s-gps">—</div><div class="stat-sub">aktif</div></div>
+      </div>
+      <div class="sec-title"><span>Grafik Suhu Real-time</span>
+        <select class="tracker-select" id="chart-device-select" onchange="switchChartDevice(this.value)" style="font-size:11px;padding:3px 8px">
+          <option value="">Pilih device...</option>
+        </select>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-head"><span class="chart-title" id="chart-title">—</span><span style="font-size:11px;color:var(--text3);font-family:var(--mono)" id="chart-last">—</span></div>
+        <canvas id="temp-chart" class="chart"></canvas>
       </div>
       <div class="sec-title"><span>Device Aktif</span>
-        <button class="sec-btn" onclick="showPage('devices',document.getElementById('nav-devices'))"><i class="ti ti-devices" style="font-size:12px"></i> Semua</button>
+        <button class="sec-btn" onclick="showPage('devices',document.getElementById('nav-devices'))"><i class="ti ti-devices" style="font-size:12px"></i>Semua</button>
       </div>
       <div class="device-grid" id="dash-devices"></div>
       <div class="sec-title"><span>Log Terbaru</span></div>
@@ -326,49 +323,68 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
     <!-- DEVICES -->
     <div class="page" id="page-devices">
       <div class="page-header"><div class="page-header-text"><h1>Device Manager</h1><p>Kelola semua perangkat IoT</p></div></div>
-      <div id="viewer-notice-devices"></div>
+      <div id="notice-devices"></div>
       <div class="device-grid" id="all-devices"></div>
-      <button class="add-card" id="add-device-btn" onclick="openAddModal()">
-        <i class="ti ti-plus" style="font-size:16px"></i> Tambah Device Baru
-      </button>
+      <button class="add-card" id="add-device-btn" onclick="openAddModal()"><i class="ti ti-plus" style="font-size:16px"></i>Tambah Device Baru</button>
     </div>
 
-    <!-- CONTROL -->
+    <!-- CONTROL PANEL -->
     <div class="page" id="page-control">
-      <div class="page-header"><div class="page-header-text"><h1>Control Panel</h1><p>Kontrol relay dan GPIO</p></div></div>
-      <div id="viewer-notice-control"></div>
+      <div class="page-header"><div class="page-header-text"><h1>Control Panel</h1><p>Kontrol GPIO, relay, dan pin setiap device</p></div></div>
+      <div id="notice-control"></div>
       <div id="ctrl-panels"></div>
+    </div>
+
+    <!-- GPS TRACKER -->
+    <div class="page" id="page-gps">
+      <div class="page-header">
+        <div class="page-header-text"><h1>GPS Tracker</h1><p>Pantau lokasi real-time perangkat</p></div>
+        <div class="page-actions">
+          <select class="tracker-select" id="gps-device-select" onchange="switchGPSDevice(this.value)">
+            <option value="">Pilih tracker...</option>
+          </select>
+          <button class="sec-btn" onclick="centerMap()"><i class="ti ti-focus-2" style="font-size:12px"></i>Center</button>
+          <button class="sec-btn" onclick="toggleGPSTrail()"><i class="ti ti-route" style="font-size:12px"></i><span id="trail-btn-txt">Trail ON</span></button>
+        </div>
+      </div>
+      <div class="gps-info-grid">
+        <div class="gps-info-card"><div class="gps-info-val" id="gps-lat">—</div><div class="gps-info-key">Latitude</div></div>
+        <div class="gps-info-card"><div class="gps-info-val" id="gps-lng">—</div><div class="gps-info-key">Longitude</div></div>
+        <div class="gps-info-card"><div class="gps-info-val" id="gps-speed">—</div><div class="gps-info-key">Speed (km/h)</div></div>
+        <div class="gps-info-card"><div class="gps-info-val" id="gps-alt">—</div><div class="gps-info-key">Altitude (m)</div></div>
+        <div class="gps-info-card"><div class="gps-info-val" id="gps-sat">—</div><div class="gps-info-key">Satellites</div></div>
+        <div class="gps-info-card"><div class="gps-info-val" id="gps-update">—</div><div class="gps-info-key">Last Update</div></div>
+      </div>
+      <div id="gps-map"></div>
+      <div style="margin-top:1rem">
+        <div class="sec-title"><span>Riwayat Posisi</span><button class="sec-btn" onclick="loadGPSHistory()"><i class="ti ti-refresh" style="font-size:12px"></i>Refresh</button></div>
+        <div class="log-wrap"><div class="log-head"><span>koordinat terakhir</span><span id="gps-hist-count">0 titik</span></div>
+        <div class="log-body" id="gps-hist-body" style="max-height:200px;overflow-y:auto"></div></div>
+      </div>
     </div>
 
     <!-- LOGS -->
     <div class="page" id="page-logs">
       <div class="page-header" style="display:flex;align-items:center;justify-content:space-between">
-        <div class="page-header-text"><h1>System Logs</h1><p>Aktivitas real-time</p></div>
-        <button class="sec-btn" onclick="logs=[];renderLogs()"><i class="ti ti-trash" style="font-size:12px"></i> Clear</button>
+        <div class="page-header-text"><h1>System Logs</h1><p>Aktivitas real-time semua perangkat</p></div>
+        <button class="sec-btn" onclick="logs=[];renderLogs()"><i class="ti ti-trash" style="font-size:12px"></i>Clear</button>
       </div>
       <div class="log-wrap">
         <div class="log-head"><span>semua aktivitas</span><span id="log-count-full">0 entri</span></div>
-        <div class="log-body" id="full-logs"><div style="padding:.8rem 1rem;color:var(--text3);font-size:12px">Belum ada log</div></div>
+        <div class="log-body" id="full-logs"></div>
       </div>
     </div>
 
-    <!-- USERS (admin only) -->
+    <!-- USERS -->
     <div class="page" id="page-users">
       <div class="page-header">
-        <div class="page-header-text"><h1>Kelola User</h1><p>Tambah, hapus, dan atur role pengguna</p></div>
-        <button class="sec-btn" id="btn-add-user" onclick="openUserModal()" style="display:none">
-          <i class="ti ti-user-plus" style="font-size:12px"></i> Tambah User
-        </button>
+        <div class="page-header-text"><h1>Kelola User</h1><p>Tambah, hapus, atur role pengguna</p></div>
+        <button class="sec-btn" id="btn-add-user" onclick="openUserModal()" style="display:none"><i class="ti ti-user-plus" style="font-size:12px"></i>Tambah User</button>
       </div>
-      <div id="viewer-notice-users"></div>
-      <div class="settings-card" id="user-table-wrap">
-        <div style="overflow-x:auto">
-          <table class="user-table" id="user-table">
-            <thead><tr><th>Username</th><th>Role</th><th>Status</th><th></th></tr></thead>
-            <tbody id="user-tbody"></tbody>
-          </table>
-        </div>
-      </div>
+      <div id="notice-users"></div>
+      <div class="settings-card"><div style="overflow-x:auto">
+        <table class="user-table"><thead><tr><th>Username</th><th>Role</th><th>Sesi</th><th></th></tr></thead><tbody id="user-tbody"></tbody></table>
+      </div></div>
     </div>
 
     <!-- SETTINGS -->
@@ -376,13 +392,14 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
       <div class="page-header"><div class="page-header-text"><h1>Settings</h1><p>Konfigurasi sistem</p></div></div>
       <div class="settings-card">
         <h3>Backend API</h3>
-        <div class="settings-row"><span class="settings-key"><i class="ti ti-server" style="color:var(--accent)"></i> Base URL</span><span class="settings-val" id="set-url">—</span></div>
-        <div class="settings-row"><span class="settings-key"><i class="ti ti-plug" style="color:var(--accent2)"></i> WebSocket</span><span class="settings-val" id="set-ws">—</span></div>
+        <div class="settings-row"><span class="settings-key"><i class="ti ti-server" style="color:var(--accent)"></i>Base URL</span><span style="font-family:var(--mono);font-size:12px" id="set-url">—</span></div>
+        <div class="settings-row"><span class="settings-key"><i class="ti ti-plug" style="color:var(--accent2)"></i>WebSocket</span><span style="font-family:var(--mono);font-size:12px" id="set-ws">—</span></div>
+        <div class="settings-row"><span class="settings-key"><i class="ti ti-clock" style="color:var(--text3)"></i>Offline timeout</span><span style="font-family:var(--mono);font-size:12px">30 detik</span></div>
       </div>
       <div class="settings-card">
         <h3>Akun</h3>
-        <div class="settings-row"><span class="settings-key"><i class="ti ti-user"></i> Username</span><span class="settings-val" id="set-user">—</span></div>
-        <div class="settings-row"><span class="settings-key"><i class="ti ti-shield-check" style="color:var(--accent2)"></i> Role</span><span class="role-pill" id="set-role">—</span></div>
+        <div class="settings-row"><span class="settings-key"><i class="ti ti-user"></i>Username</span><span style="font-family:var(--mono);font-size:12px" id="set-user">—</span></div>
+        <div class="settings-row"><span class="settings-key"><i class="ti ti-shield-check" style="color:var(--accent2)"></i>Role</span><span class="role-pill" id="set-role">—</span></div>
       </div>
       <div class="settings-card">
         <h3>Ganti Server URL</h3>
@@ -400,16 +417,16 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 <div class="modal-bg" id="modal-add">
   <div class="modal">
     <div class="modal-title"><span>Tambah Device</span><button class="modal-close" onclick="closeModal('modal-add')">&times;</button></div>
-    <div class="form-row"><div class="form-label">Device ID (unik)</div><input type="text" class="form-input" id="m-id" placeholder="esp32-002"></div>
-    <div class="form-row"><div class="form-label">Nama Device</div><input type="text" class="form-input" id="m-name" placeholder="Kamar Tidur"></div>
+    <div class="form-row"><label class="form-label">Device ID (unik)</label><input type="text" class="form-input" id="m-id" placeholder="esp32-002"></div>
+    <div class="form-row"><label class="form-label">Nama Device</label><input type="text" class="form-input" id="m-name" placeholder="Kamar Tidur"></div>
     <div class="form-row">
-      <div class="form-label">Tipe</div>
+      <label class="form-label">Tipe</label>
       <div class="type-grid">
         <div class="type-opt sel" data-t="sensor" onclick="selType(this)"><div class="icon"><i class="ti ti-temperature" style="color:var(--accent)"></i></div>Sensor</div>
         <div class="type-opt" data-t="relay" onclick="selType(this)"><div class="icon"><i class="ti ti-bolt" style="color:var(--warn)"></i></div>Relay</div>
         <div class="type-opt" data-t="servo" onclick="selType(this)"><div class="icon"><i class="ti ti-rotate" style="color:var(--purple)"></i></div>Servo</div>
+        <div class="type-opt" data-t="gps_tracker" onclick="selType(this)"><div class="icon"><i class="ti ti-map-pin" style="color:var(--cyan)"></i></div>GPS</div>
         <div class="type-opt" data-t="display" onclick="selType(this)"><div class="icon"><i class="ti ti-device-desktop" style="color:var(--accent2)"></i></div>Display</div>
-        <div class="type-opt" data-t="motor" onclick="selType(this)"><div class="icon"><i class="ti ti-engine" style="color:var(--accent2)"></i></div>Motor</div>
         <div class="type-opt" data-t="custom" onclick="selType(this)"><div class="icon"><i class="ti ti-puzzle" style="color:var(--text2)"></i></div>Custom</div>
       </div>
     </div>
@@ -420,14 +437,42 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
   </div>
 </div>
 
+<!-- Modal Edit Pins -->
+<div class="modal-bg" id="modal-pins">
+  <div class="modal" style="width:500px">
+    <div class="modal-title"><span>Edit Pin — <span id="pin-modal-device">—</span></span><button class="modal-close" onclick="closeModal('modal-pins')">&times;</button></div>
+    <div class="notice info" style="margin-bottom:1rem"><i class="ti ti-info-circle"></i>Perubahan pin langsung dikirim ke backend. ESP32 akan menerima config saat reconnect.</div>
+    <div id="pin-editor-list"></div>
+    <hr style="border-color:var(--border);margin:.8rem 0">
+    <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:.6rem">Tambah Pin Baru</div>
+    <div style="display:grid;grid-template-columns:70px 1fr 110px;gap:8px;margin-bottom:.5rem">
+      <div><label class="form-label" style="font-size:10px">GPIO</label><input type="number" class="form-input" id="new-pin-num" placeholder="26" min="0" max="39"></div>
+      <div><label class="form-label" style="font-size:10px">Nama</label><input type="text" class="form-input" id="new-pin-name" placeholder="Relay Lampu"></div>
+      <div><label class="form-label" style="font-size:10px">Tipe</label>
+        <select class="form-select" id="new-pin-type">
+          <option value="relay">Relay</option>
+          <option value="pwm">PWM</option>
+          <option value="servo">Servo</option>
+          <option value="input">Input</option>
+        </select>
+      </div>
+    </div>
+    <button class="sec-btn" style="width:100%;justify-content:center" onclick="addPinToDevice()"><i class="ti ti-plus" style="font-size:12px"></i>Tambah Pin</button>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('modal-pins')">Tutup</button>
+      <button class="btn-primary" onclick="savePins()">Simpan Config</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal Tambah User -->
 <div class="modal-bg" id="modal-user">
   <div class="modal">
     <div class="modal-title"><span>Tambah User</span><button class="modal-close" onclick="closeModal('modal-user')">&times;</button></div>
-    <div class="form-row"><div class="form-label">Username</div><input type="text" class="form-input" id="u-name" placeholder="namauser"></div>
-    <div class="form-row"><div class="form-label">Password</div><input type="password" class="form-input" id="u-pass" placeholder="••••••••"></div>
+    <div class="form-row"><label class="form-label">Username</label><input type="text" class="form-input" id="u-name" placeholder="namauser"></div>
+    <div class="form-row"><label class="form-label">Password</label><input type="password" class="form-input" id="u-pass" placeholder="••••••••"></div>
     <div class="form-row">
-      <div class="form-label">Role</div>
+      <label class="form-label">Role</label>
       <select class="form-select" id="u-role">
         <option value="viewer">viewer — hanya lihat, tidak bisa kontrol</option>
         <option value="admin">admin — akses penuh</option>
@@ -443,71 +488,45 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 
 <script>
 // ============================================================
-let BASE_URL = 'https://projectbelajar-production.up.railway.app';
+let BASE_URL = localStorage.getItem('esp32_server') || 'http://localhost:8000';
 // ============================================================
 
-let token='', username='', userRole='', devices={}, logs=[], ws=null;
-let selTypeVal='sensor', pollInterval=null;
+let token='', username='', userRole='';
+let devices={}, devicePins={}, logs=[], ws=null, pollInterval=null;
+let selTypeVal='sensor';
+let chartCtx=null, chartInstance=null, chartDeviceId=null;
+let gpsMap=null, gpsMarkers={}, gpsTrails={}, gpsTrailEnabled=true;
+let currentGPSDevice=null, currentPinDevice=null;
+let tempHistory={};
 
-const typeIcons  = {sensor:'ti-temperature',relay:'ti-bolt',servo:'ti-rotate',display:'ti-device-desktop',motor:'ti-engine',custom:'ti-puzzle'};
-const typeColors = {sensor:'#58a6ff',relay:'#d29922',servo:'#bc8cff',display:'#3fb950',motor:'#3fb950',custom:'#8b949e'};
+const typeIcons  = {sensor:'ti-temperature',relay:'ti-bolt',servo:'ti-rotate',display:'ti-device-desktop',motor:'ti-engine',gps_tracker:'ti-map-pin',custom:'ti-puzzle'};
+const typeColors = {sensor:'#58a6ff',relay:'#d29922',servo:'#bc8cff',display:'#3fb950',motor:'#3fb950',gps_tracker:'#39d353',custom:'#8b949e'};
+const pinTypeColors = {relay:'#d29922',pwm:'#58a6ff',servo:'#bc8cff',input:'#8b949e'};
 
-// ---- ROLE HELPERS ----
 const isAdmin = () => userRole === 'admin';
 
-function applyRoleUI() {
-  // Tombol tambah device
-  const addBtn = document.getElementById('add-device-btn');
-  if (!isAdmin()) {
-    addBtn.classList.add('locked');
-    addBtn.title = 'Hanya admin yang bisa menambah device';
-  } else {
-    addBtn.classList.remove('locked');
+// ---- AUTO LOGOUT on 401 ----
+async function apiFetch(path, opts={}) {
+  const res = await fetch(BASE_URL+path, {
+    ...opts,
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+token,...(opts.headers||{})},
+    body: opts.body ? JSON.stringify(opts.body) : undefined
+  });
+  if (res.status === 401) {
+    // Token expired — auto logout
+    localStorage.clear();
+    location.reload();
+    return;
   }
-
-  // Lock icon di sidebar Users
-  const lock = document.getElementById('users-lock');
-  if (lock) lock.style.display = isAdmin() ? 'none' : '';
-
-  // Tombol tambah user
-  const btnAddUser = document.getElementById('btn-add-user');
-  if (btnAddUser) btnAddUser.style.display = isAdmin() ? 'flex' : 'none';
-
-  // Viewer notice di Control
-  const vc = document.getElementById('viewer-notice-control');
-  if (vc) vc.innerHTML = !isAdmin()
-    ? `<div class="viewer-notice"><i class="ti ti-info-circle"></i> Mode viewer — kontrol relay dinonaktifkan. Hubungi admin untuk mengubah status.</div>`
-    : '';
-
-  // Viewer notice di Devices
-  const vd = document.getElementById('viewer-notice-devices');
-  if (vd) vd.innerHTML = !isAdmin()
-    ? `<div class="viewer-notice"><i class="ti ti-info-circle"></i> Mode viewer — tidak bisa menambah atau menghapus device.</div>`
-    : '';
-
-  // Viewer notice di Users
-  const vu = document.getElementById('viewer-notice-users');
-  if (vu) vu.innerHTML = !isAdmin()
-    ? `<div class="viewer-notice"><i class="ti ti-lock"></i> Halaman ini hanya bisa diakses oleh admin.</div>`
-    : '';
-
-  // Role pill di topbar
-  const rp = document.getElementById('role-pill');
-  if (rp) { rp.textContent = userRole; rp.className = 'role-pill ' + userRole; }
-
-  // Role di settings
-  const sr = document.getElementById('set-role');
-  if (sr) { sr.textContent = userRole; sr.className = 'role-pill ' + userRole; }
+  if (!res.ok) { const d=await res.json(); throw new Error(d.detail||res.statusText); }
+  return res.json();
 }
 
 // ---- SIDEBAR ----
 function toggleSidebar() {
-  const sb=document.getElementById('sidebar');
-  const ov=document.getElementById('sidebar-overlay');
-  const hb=document.getElementById('hamburger');
+  const sb=document.getElementById('sidebar'),ov=document.getElementById('sidebar-overlay'),hb=document.getElementById('hamburger');
   const open=sb.classList.toggle('open');
-  ov.classList.toggle('open',open);
-  hb.classList.toggle('open',open);
+  ov.classList.toggle('open',open);hb.classList.toggle('open',open);
 }
 function closeSidebar() {
   document.getElementById('sidebar').classList.remove('open');
@@ -519,9 +538,8 @@ function closeSidebar() {
 async function doLogin() {
   const u=document.getElementById('inp-user').value.trim();
   const p=document.getElementById('inp-pass').value;
-  const btn=document.getElementById('login-btn');
-  const err=document.getElementById('login-err');
-  err.textContent=''; btn.disabled=true; btn.textContent='Menghubungi server...';
+  const btn=document.getElementById('login-btn'),err=document.getElementById('login-err');
+  err.textContent='';btn.disabled=true;btn.textContent='Menghubungi server...';
   try {
     const res=await fetch(`${BASE_URL}/api/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});
     const data=await res.json();
@@ -531,10 +549,9 @@ async function doLogin() {
     localStorage.setItem('esp32_user',username);
     localStorage.setItem('esp32_role',userRole);
     enterApp();
-  } catch(e) { err.textContent='⚠ '+e.message; }
-  btn.disabled=false; btn.textContent='MASUK';
+  } catch(e){err.textContent='⚠ '+e.message;}
+  btn.disabled=false;btn.textContent='MASUK';
 }
-
 document.getElementById('inp-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
 document.getElementById('inp-user').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
 
@@ -546,17 +563,20 @@ function enterApp() {
   document.getElementById('set-url').textContent=BASE_URL;
   document.getElementById('server-url-input').value=BASE_URL;
   document.getElementById('sf-url').textContent='backend: '+BASE_URL.replace('https://','');
+  const rp=document.getElementById('role-pill');
+  rp.textContent=userRole; rp.className='role-pill '+userRole;
+  const sr=document.getElementById('set-role');
+  sr.textContent=userRole; sr.className='role-pill '+userRole;
   applyRoleUI();
+  initChart();
+  initMap();
   startApp();
   addLog('System','Login: '+username+' ('+userRole+')','ok');
 }
 
 async function doLogout() {
   try{await apiFetch('/api/logout',{method:'POST'});}catch(e){}
-  token='';username='';userRole='';
-  localStorage.removeItem('esp32_token');
-  localStorage.removeItem('esp32_user');
-  localStorage.removeItem('esp32_role');
+  localStorage.clear();
   if(ws) ws.close();
   clearInterval(pollInterval);
   devices={};
@@ -565,17 +585,24 @@ async function doLogout() {
   document.getElementById('inp-pass').value='';
 }
 
-// ---- API ----
-async function apiFetch(path,opts={}) {
-  const res=await fetch(BASE_URL+path,{
-    ...opts,headers:{'Content-Type':'application/json','Authorization':'Bearer '+token,...(opts.headers||{})},
-    body:opts.body?JSON.stringify(opts.body):undefined
+// ---- ROLE UI ----
+function applyRoleUI() {
+  document.getElementById('add-device-btn').classList.toggle('locked',!isAdmin());
+  document.getElementById('users-lock').style.display=isAdmin()?'none':'';
+  const addUserBtn=document.getElementById('btn-add-user');
+  if(addUserBtn) addUserBtn.style.display=isAdmin()?'flex':'none';
+  const notices=[
+    {id:'notice-control',msg:'Mode viewer — kontrol relay dinonaktifkan.',show:!isAdmin()},
+    {id:'notice-devices',msg:'Mode viewer — tidak bisa menambah atau menghapus device.',show:!isAdmin()},
+    {id:'notice-users',msg:'Halaman ini hanya bisa diakses oleh admin.',show:!isAdmin()},
+  ];
+  notices.forEach(n=>{
+    const el=document.getElementById(n.id);
+    if(el) el.innerHTML=n.show?`<div class="notice"><i class="ti ti-info-circle"></i>${n.msg}</div>`:'';
   });
-  if(!res.ok){const d=await res.json();throw new Error(d.detail||res.statusText);}
-  return res.json();
 }
 
-// ---- WS ----
+// ---- WEBSOCKET ----
 function connectWS() {
   const wsUrl=BASE_URL.replace('https://','wss://').replace('http://','ws://')+'/ws?token='+token;
   document.getElementById('set-ws').textContent=wsUrl.replace('wss://','').split('/ws')[0];
@@ -585,19 +612,26 @@ function connectWS() {
     ws.onmessage=(e)=>{
       const msg=JSON.parse(e.data);
       if(msg.type==='init'){msg.devices.forEach(d=>{if(d.device_id)devices[d.device_id]=d;});}
-      else if(msg.type==='sensor'||msg.type==='status'){
+      else if(['sensor','status','gps'].includes(msg.type)){
         const id=msg.device_id,d=msg.data;
-        devices[id]={...devices[id]||{},...d,device_id:id,online:true,last_seen:msg.timestamp};
-        addLog(id,msg.type==='sensor'?`T:${d.temp}°C H:${d.humidity}%`:'Status update','info');
+        devices[id]={...devices[id]||{},...d,device_id:id,online:msg.type!=='status'||d.status!=='offline',last_seen:msg.timestamp};
+        if(msg.type==='sensor'){
+          if(!tempHistory[id]) tempHistory[id]=[];
+          tempHistory[id].push({t:new Date().toLocaleTimeString('id-ID'),v:parseFloat(d.temp)||0,h:parseFloat(d.humidity)||0});
+          if(tempHistory[id].length>60) tempHistory[id].shift();
+          if(chartDeviceId===id) updateChart(id);
+          addLog(id,`T:${d.temp}°C H:${d.humidity}%`,'info');
+        }
+        if(msg.type==='gps'&&id===currentGPSDevice) updateGPSDisplay(id,d);
+        if(msg.type==='status'&&d.status==='offline') addLog(id,'Device offline','warn');
       }
       renderAll();
     };
     ws.onerror=()=>setWS(false);
-    ws.onclose=()=>{setWS(false);setTimeout(connectWS,5000);};
+    ws.onclose=()=>{setWS(false);addLog('System','WS putus, retry 5s...','warn');setTimeout(connectWS,5000);};
   } catch(e){setWS(false);}
 }
-
-function setWS(ok) {
+function setWS(ok){
   document.getElementById('ws-dot').className='ws-dot'+(ok?'':' off');
   document.getElementById('ws-label').textContent=ok?'Connected':'Disconnected';
 }
@@ -606,8 +640,10 @@ function setWS(ok) {
 async function fetchDevices() {
   try {
     const list=await apiFetch('/api/devices');
-    list.forEach(d=>{if(d.device_id)devices[d.device_id]=d;});
+    if(!list) return;
+    list.forEach(d=>{if(d.device_id) devices[d.device_id]=d;});
     const stats=await apiFetch('/api/stats');
+    if(!stats) return;
     updateStats(stats);
     renderAll();
     const now=new Date().toLocaleTimeString('id-ID');
@@ -615,43 +651,218 @@ async function fetchDevices() {
     document.getElementById('sf-update').textContent='sync: '+now;
   } catch(e){addLog('System','Poll error: '+e.message,'error');}
 }
-
-function startApp() {
-  fetchDevices();
-  connectWS();
-  pollInterval=setInterval(fetchDevices,5000);
-}
+function startApp(){fetchDevices();connectWS();pollInterval=setInterval(fetchDevices,5000);}
 
 // ---- STATS ----
-function updateStats(s) {
+function updateStats(s){
   document.getElementById('s-total').textContent=s.total;
   document.getElementById('s-online').textContent=s.online;
   document.getElementById('s-offline').textContent=s.offline;
   document.getElementById('s-temp').textContent=s.avg_temp?s.avg_temp+'°C':'—';
+  document.getElementById('s-gps').textContent=s.gps_trackers??'—';
   document.getElementById('nav-badge').textContent=s.total;
+  updateDeviceSelects();
+}
+
+function updateDeviceSelects(){
+  const list=Object.values(devices);
+  // Chart select
+  const cs=document.getElementById('chart-device-select');
+  const prev=cs.value;
+  cs.innerHTML='<option value="">Pilih device...</option>';
+  list.filter(d=>d.temp!=null).forEach(d=>{
+    cs.innerHTML+=`<option value="${d.device_id}" ${d.device_id===prev?'selected':''}>${d.name||d.device_id}</option>`;
+  });
+  if(!chartDeviceId && list.filter(d=>d.temp!=null).length){
+    chartDeviceId=list.find(d=>d.temp!=null)?.device_id;
+    cs.value=chartDeviceId||'';
+    if(chartDeviceId) updateChart(chartDeviceId);
+  }
+  // GPS select
+  const gs=document.getElementById('gps-device-select');
+  const prevG=gs.value;
+  gs.innerHTML='<option value="">Pilih tracker...</option>';
+  list.filter(d=>d.lat||d.device_type==='gps_tracker').forEach(d=>{
+    gs.innerHTML+=`<option value="${d.device_id}" ${d.device_id===prevG?'selected':''}>${d.name||d.device_id}</option>`;
+  });
+}
+
+// ---- CHART ----
+function initChart(){
+  chartCtx=document.getElementById('temp-chart').getContext('2d');
+  drawChart([],[]);
+}
+function drawChart(labels,temps,humids=[]){
+  if(chartInstance) chartInstance=null;
+  const ctx=chartCtx;
+  ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
+  const W=ctx.canvas.offsetWidth||600,H=160;
+  ctx.canvas.width=W;ctx.canvas.height=H;
+  const pad={t:20,r:20,b:30,l:45};
+  const iW=W-pad.l-pad.r,iH=H-pad.t-pad.b;
+  if(!labels.length){
+    ctx.fillStyle='#484f58';ctx.font='12px JetBrains Mono';ctx.textAlign='center';
+    ctx.fillText('Belum ada data sensor',W/2,H/2);return;
+  }
+  const allVals=[...temps,...humids].filter(Boolean);
+  const mn=Math.min(...allVals)-2,mx=Math.max(...allVals)+2;
+  const scaleY=v=>pad.t+iH-(v-mn)/(mx-mn)*iH;
+  const scaleX=i=>pad.l+i/(labels.length-1||1)*iW;
+  // Grid
+  ctx.strokeStyle='#21262d';ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){
+    const y=pad.t+i*iH/4;
+    ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(pad.l+iW,y);ctx.stroke();
+    const val=mx-(mx-mn)*i/4;
+    ctx.fillStyle='#484f58';ctx.font='10px JetBrains Mono';ctx.textAlign='right';
+    ctx.fillText(val.toFixed(1),pad.l-4,y+3);
+  }
+  // X labels
+  const step=Math.max(1,Math.floor(labels.length/6));
+  labels.forEach((l,i)=>{
+    if(i%step===0){
+      ctx.fillStyle='#484f58';ctx.font='10px JetBrains Mono';ctx.textAlign='center';
+      ctx.fillText(l,scaleX(i),H-8);
+    }
+  });
+  // Temp line
+  if(temps.length){
+    ctx.beginPath();ctx.strokeStyle='#58a6ff';ctx.lineWidth=2;ctx.lineJoin='round';
+    temps.forEach((v,i)=>{i===0?ctx.moveTo(scaleX(i),scaleY(v)):ctx.lineTo(scaleX(i),scaleY(v));});
+    ctx.stroke();
+    // Fill
+    ctx.beginPath();temps.forEach((v,i)=>{i===0?ctx.moveTo(scaleX(i),scaleY(v)):ctx.lineTo(scaleX(i),scaleY(v));});
+    ctx.lineTo(scaleX(temps.length-1),H-pad.b);ctx.lineTo(pad.l,H-pad.b);ctx.closePath();
+    const grad=ctx.createLinearGradient(0,pad.t,0,H-pad.b);
+    grad.addColorStop(0,'rgba(88,166,255,0.2)');grad.addColorStop(1,'rgba(88,166,255,0)');
+    ctx.fillStyle=grad;ctx.fill();
+  }
+  // Humidity line
+  if(humids.length){
+    ctx.beginPath();ctx.strokeStyle='#3fb950';ctx.lineWidth=1.5;ctx.setLineDash([4,3]);ctx.lineJoin='round';
+    humids.forEach((v,i)=>{i===0?ctx.moveTo(scaleX(i),scaleY(v)):ctx.lineTo(scaleX(i),scaleY(v));});
+    ctx.stroke();ctx.setLineDash([]);
+  }
+  // Legend
+  ctx.fillStyle='#58a6ff';ctx.fillRect(pad.l,6,12,4);
+  ctx.fillStyle='#8b949e';ctx.font='10px JetBrains Mono';ctx.textAlign='left';ctx.fillText('Suhu (°C)',pad.l+16,11);
+  ctx.strokeStyle='#3fb950';ctx.setLineDash([4,3]);ctx.beginPath();ctx.moveTo(pad.l+80,8);ctx.lineTo(pad.l+92,8);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle='#8b949e';ctx.fillText('Humidity (%)',pad.l+96,11);
+}
+
+function updateChart(devId){
+  const hist=tempHistory[devId]||[];
+  const labels=hist.map(h=>h.t);
+  const temps=hist.map(h=>h.v);
+  const humids=hist.map(h=>h.h);
+  drawChart(labels,temps,humids);
+  const d=devices[devId];
+  document.getElementById('chart-title').textContent=(d?.name||devId)+' — Suhu & Humidity';
+  document.getElementById('chart-last').textContent=hist.length?`T:${hist[hist.length-1].v}°C H:${hist[hist.length-1].h}%`:'—';
+}
+
+function switchChartDevice(id){
+  chartDeviceId=id;
+  if(id) updateChart(id);
+  else drawChart([],[]);
+}
+
+// ---- MAP / GPS ----
+function initMap(){
+  gpsMap=L.map('gps-map',{zoomControl:true}).setView([-2.5,118.0],5);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    attribution:'© OpenStreetMap',maxZoom:19
+  }).addTo(gpsMap);
+}
+
+function switchGPSDevice(id){
+  currentGPSDevice=id;
+  if(id&&devices[id]) updateGPSDisplay(id,devices[id]);
+  loadGPSHistory();
+}
+
+function updateGPSDisplay(id,d){
+  if(!d.lat||!d.lng) return;
+  document.getElementById('gps-lat').textContent=parseFloat(d.lat).toFixed(6);
+  document.getElementById('gps-lng').textContent=parseFloat(d.lng).toFixed(6);
+  document.getElementById('gps-speed').textContent=d.speed??'—';
+  document.getElementById('gps-alt').textContent=d.altitude??'—';
+  document.getElementById('gps-sat').textContent=d.satellites??'—';
+  document.getElementById('gps-update').textContent=new Date().toLocaleTimeString('id-ID');
+  // Marker
+  const pos=[parseFloat(d.lat),parseFloat(d.lng)];
+  if(gpsMarkers[id]){gpsMarkers[id].setLatLng(pos);}
+  else {
+    const icon=L.divIcon({html:`<div style="background:var(--cyan,#39d353);width:14px;height:14px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 6px rgba(57,211,83,.8)"></div>`,iconSize:[14,14],iconAnchor:[7,7],className:''});
+    gpsMarkers[id]=L.marker(pos,{icon}).addTo(gpsMap);
+    gpsMarkers[id].bindPopup(`<b>${devices[id]?.name||id}</b><br>${parseFloat(d.lat).toFixed(5)}, ${parseFloat(d.lng).toFixed(5)}`);
+  }
+  // Trail
+  if(gpsTrailEnabled){
+    if(!gpsTrails[id]) gpsTrails[id]=L.polyline([],{color:'#39d353',weight:2,opacity:.7}).addTo(gpsMap);
+    gpsTrails[id].addLatLng(pos);
+  }
+}
+
+function centerMap(){
+  if(currentGPSDevice&&gpsMarkers[currentGPSDevice]){
+    gpsMap.setView(gpsMarkers[currentGPSDevice].getLatLng(),15);
+  } else if(Object.values(gpsMarkers).length){
+    const grp=L.featureGroup(Object.values(gpsMarkers));
+    gpsMap.fitBounds(grp.getBounds().pad(0.2));
+  }
+}
+
+function toggleGPSTrail(){
+  gpsTrailEnabled=!gpsTrailEnabled;
+  document.getElementById('trail-btn-txt').textContent=gpsTrailEnabled?'Trail ON':'Trail OFF';
+  if(!gpsTrailEnabled){
+    Object.values(gpsTrails).forEach(t=>t.setLatLngs([]));
+  }
+}
+
+async function loadGPSHistory(){
+  if(!currentGPSDevice) return;
+  try {
+    const hist=await apiFetch('/api/devices/'+currentGPSDevice+'/gps?limit=200');
+    if(!hist) return;
+    document.getElementById('gps-hist-count').textContent=hist.length+' titik';
+    document.getElementById('gps-hist-body').innerHTML=hist.slice().reverse().slice(0,30).map(h=>`
+      <div class="log-row">
+        <span class="log-time">${h.time?new Date(h.time).toLocaleTimeString('id-ID'):''}</span>
+        <span class="log-dev" style="color:var(--cyan)">${parseFloat(h.lat).toFixed(5)}</span>
+        <span class="log-msg">${parseFloat(h.lng).toFixed(5)} — ${h.speed??0} km/h</span>
+      </div>`).join('');
+    // Draw trail dari history
+    if(gpsTrailEnabled&&gpsTrails[currentGPSDevice]){
+      const coords=hist.filter(h=>h.lat&&h.lng).map(h=>[parseFloat(h.lat),parseFloat(h.lng)]);
+      gpsTrails[currentGPSDevice].setLatLngs(coords);
+    }
+  } catch(e){addLog('GPS','Error load history: '+e.message,'error');}
 }
 
 // ---- RENDER ----
-function renderAll() {
+function renderAll(){
   renderDevices('dash-devices',Object.values(devices).slice(0,6),false);
   renderDevices('all-devices',Object.values(devices),true);
   if(document.getElementById('page-control').classList.contains('active')) renderControl();
 }
 
-function chipBadge(d) {
+function chipBadge(d){
   if(!d.chip) return '';
   const c=(d.chip||'').toLowerCase().includes('8266')?'esp8266':'esp32';
   return `<span class="chip-badge ${c}">${d.chip}</span>`;
 }
 
-function renderDevices(id,list,showDel) {
+function renderDevices(id,list,showDel){
   const el=document.getElementById(id);
   if(!list.length){el.innerHTML='<div style="color:var(--text3);font-size:13px;padding:.5rem 0">Tidak ada device.</div>';return;}
   el.innerHTML=list.map(d=>{
-    const icon=typeIcons[d.type]||'ti-cpu';
-    const col=typeColors[d.type]||'#8b949e';
+    const icon=typeIcons[d.type||d.device_type]||'ti-cpu';
+    const col=typeColors[d.type||d.device_type]||'#8b949e';
     const st=d.online?'online':'offline';
-    return `<div class="device-card ${st}">
+    const isGPS=d.device_type==='gps_tracker'||d.type==='gps_tracker';
+    return `<div class="device-card ${st} ${isGPS?'gps-tracker':''}">
       <div class="device-head">
         <div class="device-icon"><i class="ti ${icon}" style="color:${col};font-size:15px"></i></div>
         <span class="status-pill ${st}">${st}</span>
@@ -659,12 +870,19 @@ function renderDevices(id,list,showDel) {
       <div class="device-name">${d.name||d.device_id}</div>
       <div class="device-meta">${d.device_id||''} ${chipBadge(d)}</div>
       <div class="device-metrics">
-        <div class="metric"><div class="val">${d.temp!=null?d.temp+'°':'—'}</div><div class="key">Temp</div></div>
-        <div class="metric"><div class="val">${d.humidity!=null?d.humidity+'%':'—'}</div><div class="key">Humid</div></div>
-        <div class="metric"><div class="val">${d.uptime!=null?fmtUp(d.uptime):'—'}</div><div class="key">Uptime</div></div>
+        ${isGPS?`
+          <div class="metric"><div class="val" style="font-size:11px">${d.lat?parseFloat(d.lat).toFixed(4):'—'}</div><div class="key">Lat</div></div>
+          <div class="metric"><div class="val" style="font-size:11px">${d.lng?parseFloat(d.lng).toFixed(4):'—'}</div><div class="key">Lng</div></div>
+          <div class="metric"><div class="val">${d.speed??'—'}</div><div class="key">km/h</div></div>
+        `:`
+          <div class="metric"><div class="val">${d.temp!=null?d.temp+'°':'—'}</div><div class="key">Temp</div></div>
+          <div class="metric"><div class="val">${d.humidity!=null?d.humidity+'%':'—'}</div><div class="key">Humid</div></div>
+          <div class="metric"><div class="val">${d.uptime!=null?fmtUp(d.uptime):'—'}</div><div class="key">Uptime</div></div>
+        `}
       </div>
-      ${showDel && isAdmin()?`<div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border)">
-        <button class="del-btn" onclick="removeDevice('${d.device_id||''}')"><i class="ti ti-trash" style="font-size:11px"></i> Hapus</button>
+      ${showDel&&isAdmin()?`<div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border);display:flex;gap:6px">
+        <button class="del-btn" onclick="openPinModal('${d.device_id}')"><i class="ti ti-settings" style="font-size:11px"></i> Pin</button>
+        <button class="del-btn" onclick="removeDevice('${d.device_id}')"><i class="ti ti-trash" style="font-size:11px"></i> Hapus</button>
       </div>`:''}
     </div>`;
   }).join('');
@@ -672,39 +890,39 @@ function renderDevices(id,list,showDel) {
 
 function fmtUp(s){if(s<60)return s+'s';if(s<3600)return Math.floor(s/60)+'m';return Math.floor(s/3600)+'h';}
 
-function renderControl() {
+// ---- CONTROL ----
+async function renderControl(){
   const el=document.getElementById('ctrl-panels');
   const list=Object.values(devices);
   if(!list.length){el.innerHTML='<div style="color:var(--text3);font-size:13px">Tidak ada device</div>';return;}
+
+  // Load pin configs
+  for(const d of list){
+    if(!devicePins[d.device_id]){
+      try{const pins=await apiFetch('/api/devices/'+d.device_id+'/pins');if(pins)devicePins[d.device_id]=pins;}catch(e){}
+    }
+  }
+
+  const locked=!isAdmin();
   el.innerHTML=list.map(d=>{
     const icon=typeIcons[d.type]||'ti-cpu';
     const col=typeColors[d.type]||'#8b949e';
     const id=d.device_id||'';
-    const locked=!isAdmin();
+    const pins=devicePins[id]||[];
     return `<div class="ctrl-card">
       <div class="ctrl-head">
         <div class="ctrl-title">
           <div class="device-icon"><i class="ti ${icon}" style="color:${col};font-size:15px"></i></div>
-          <div>
-            <div style="font-size:13px;font-weight:600">${d.name||id}</div>
-            <div style="font-size:11px;color:var(--text3);font-family:var(--mono)">${id} ${chipBadge(d)}</div>
-          </div>
+          <div><div style="font-size:13px;font-weight:600">${d.name||id}</div>
+          <div style="font-size:11px;color:var(--text3);font-family:var(--mono)">${id} ${chipBadge(d)}</div></div>
         </div>
-        <span class="status-pill ${d.online?'online':'offline'}">${d.online?'online':'offline'}</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="status-pill ${d.online?'online':'offline'}">${d.online?'online':'offline'}</span>
+          ${isAdmin()?`<button class="sec-btn" onclick="openPinModal('${id}')"><i class="ti ti-settings" style="font-size:11px"></i> Edit Pin</button>`:''}
+        </div>
       </div>
-      <div class="toggle-row">
-        <span class="toggle-label"><i class="ti ti-bolt" style="color:var(--warn);font-size:14px"></i> Relay 1</span>
-        <div class="toggle ${d.relay1?'on':''} ${locked?'locked':''}" onclick="${locked?'':'toggleRelay(\''+id+'\',1,this)'}"></div>
-      </div>
-      <div class="toggle-row">
-        <span class="toggle-label"><i class="ti ti-bolt" style="color:var(--warn);font-size:14px"></i> Relay 2</span>
-        <div class="toggle ${d.relay2?'on':''} ${locked?'locked':''}" onclick="${locked?'':'toggleRelay(\''+id+'\',2,this)'}"></div>
-      </div>
-      <div class="toggle-row">
-        <span class="toggle-label"><i class="ti ti-refresh" style="color:var(--accent);font-size:14px"></i> Restart Device</span>
-        ${isAdmin()?`<button class="del-btn" onclick="sendCmd('${id}','restart')"><i class="ti ti-refresh" style="font-size:11px"></i> Restart</button>`
-        :`<span style="font-size:11px;color:var(--text3)">—</span>`}
-      </div>
+      ${pins.length===0?'<div style="font-size:12px;color:var(--text3)">Tidak ada pin terkonfigurasi. Klik Edit Pin untuk menambah.</div>':
+        pins.map(p=>renderPinRow(id,p,locked)).join('')}
       <div style="margin-top:10px;font-size:12px;color:var(--text3);font-family:var(--mono)">
         Sensor: <span style="color:var(--accent)">${d.online?(d.temp||'—')+'°C / '+(d.humidity||'—')+'% RH':'offline'}</span>
         &nbsp;·&nbsp; RSSI: <span style="color:var(--accent2)">${d.rssi||'—'} dBm</span>
@@ -713,120 +931,181 @@ function renderControl() {
   }).join('');
 }
 
-async function toggleRelay(id,pin,el) {
-  if(!isAdmin()){addLog('System','Akses ditolak — hanya admin','error');return;}
+function renderPinRow(devId,p,locked){
+  const col=pinTypeColors[p.type]||'#8b949e';
+  if(p.type==='relay'){
+    return `<div class="pin-row">
+      <span class="pin-label">
+        <i class="ti ti-bolt" style="color:${col};font-size:14px"></i>
+        GPIO${p.pin} — ${p.name} <span class="pin-type-badge">${p.type}</span>
+      </span>
+      <div class="toggle ${p.state?'on':''} ${locked?'locked':''}" 
+        onclick="${locked?'':'togglePin(\''+devId+'\','+p.pin+',this)'}"></div>
+    </div>`;
+  } else if(p.type==='pwm'||p.type==='servo'){
+    return `<div class="pin-row">
+      <span class="pin-label">
+        <i class="ti ti-adjustments" style="color:${col};font-size:14px"></i>
+        GPIO${p.pin} — ${p.name} <span class="pin-type-badge">${p.type}</span>
+      </span>
+      <div class="slider-wrap">
+        <input type="range" class="pin-slider" min="0" max="${p.type==='servo'?180:255}" value="${p.value||0}"
+          ${locked?'disabled':''} oninput="this.nextElementSibling.textContent=this.value;sendSlider('${devId}',${p.pin},this.value)">
+        <span class="pin-val">${p.value||0}</span>
+      </div>
+    </div>`;
+  } else {
+    return `<div class="pin-row">
+      <span class="pin-label">
+        <i class="ti ti-plug" style="color:${col};font-size:14px"></i>
+        GPIO${p.pin} — ${p.name} <span class="pin-type-badge">${p.type}</span>
+      </span>
+      <span style="font-size:12px;font-family:var(--mono);color:var(--text3)">${p.state?'HIGH':'LOW'}</span>
+    </div>`;
+  }
+}
+
+async function togglePin(devId,pin,el){
+  if(!isAdmin()) return;
   const state=!el.classList.contains('on');
   try {
-    await apiFetch('/api/command',{method:'POST',body:{device_id:id,action:'set_relay',pin,state}});
+    await apiFetch('/api/command',{method:'POST',body:{device_id:devId,action:'set_relay',pin,state}});
     el.classList.toggle('on',state);
-    if(devices[id]) devices[id]['relay'+pin]=state;
-    addLog(id,'Relay '+pin+' → '+(state?'ON':'OFF'),'ok');
-  } catch(e){addLog(id,'Error: '+e.message,'error');}
+    const pins=devicePins[devId]||[];
+    const p=pins.find(x=>x.pin===pin);
+    if(p) p.state=state;
+    addLog(devId,`GPIO${pin} → ${state?'ON':'OFF'}`,'ok');
+  } catch(e){addLog(devId,'Error: '+e.message,'error');}
 }
 
-async function sendCmd(id,action) {
-  if(!isAdmin()&&!['ping','get_sensor'].includes(action)){addLog('System','Akses ditolak','error');return;}
-  try {
-    await apiFetch('/api/command',{method:'POST',body:{device_id:id,action}});
-    addLog(id,'Command: '+action,'ok');
-  } catch(e){addLog(id,'Error: '+e.message,'error');}
+let sliderTimeout={};
+function sendSlider(devId,pin,val){
+  clearTimeout(sliderTimeout[pin]);
+  sliderTimeout[pin]=setTimeout(async()=>{
+    try{
+      await apiFetch('/api/command',{method:'POST',body:{device_id:devId,action:'set_pwm',pin:pin,value:parseInt(val)}});
+      addLog(devId,`GPIO${pin} PWM=${val}`,'ok');
+    }catch(e){addLog(devId,'Error: '+e.message,'error');}
+  },300);
 }
 
-// ---- DEVICES ----
-function openAddModal() {
-  if(!isAdmin()){addLog('System','Akses ditolak — hanya admin','error');return;}
-  document.getElementById('modal-add').classList.add('open');
+// ---- PIN EDITOR ----
+async function openPinModal(devId){
+  if(!isAdmin()) return;
+  currentPinDevice=devId;
+  document.getElementById('pin-modal-device').textContent=devices[devId]?.name||devId;
+  // Load terbaru
+  try{const pins=await apiFetch('/api/devices/'+devId+'/pins');if(pins)devicePins[devId]=pins;}catch(e){}
+  renderPinEditor(devId);
+  document.getElementById('modal-pins').classList.add('open');
 }
+
+function renderPinEditor(devId){
+  const pins=devicePins[devId]||[];
+  const el=document.getElementById('pin-editor-list');
+  if(!pins.length){el.innerHTML='<div style="color:var(--text3);font-size:12px;padding:.5rem 0">Belum ada pin. Tambahkan di bawah.</div>';return;}
+  el.innerHTML=pins.map((p,i)=>`
+    <div class="pin-editor-row">
+      <div><span style="font-family:var(--mono);font-size:12px;color:var(--accent)">GPIO${p.pin}</span></div>
+      <div><input type="text" class="form-input" style="padding:5px 8px;font-size:12px" value="${p.name}" onchange="devicePins['${devId}'][${i}].name=this.value"></div>
+      <div>
+        <select class="form-select" style="padding:5px 8px;font-size:12px" onchange="devicePins['${devId}'][${i}].type=this.value">
+          ${['relay','pwm','servo','input'].map(t=>`<option value="${t}" ${p.type===t?'selected':''}>${t}</option>`).join('')}
+        </select>
+      </div>
+      <button class="del-btn" onclick="removePinFromEditor('${devId}',${p.pin})"><i class="ti ti-x" style="font-size:11px"></i></button>
+    </div>`).join('');
+}
+
+function removePinFromEditor(devId,pin){
+  devicePins[devId]=(devicePins[devId]||[]).filter(p=>p.pin!==pin);
+  renderPinEditor(devId);
+}
+
+function addPinToDevice(){
+  const devId=currentPinDevice;
+  const pinNum=parseInt(document.getElementById('new-pin-num').value);
+  const name=document.getElementById('new-pin-name').value.trim();
+  const type=document.getElementById('new-pin-type').value;
+  if(isNaN(pinNum)||!name){alert('GPIO number dan nama wajib diisi');return;}
+  if(!devicePins[devId]) devicePins[devId]=[];
+  if(devicePins[devId].find(p=>p.pin===pinNum)){alert('Pin sudah ada');return;}
+  devicePins[devId].push({pin:pinNum,name,type,state:false,value:0});
+  document.getElementById('new-pin-num').value='';
+  document.getElementById('new-pin-name').value='';
+  renderPinEditor(devId);
+}
+
+async function savePins(){
+  const devId=currentPinDevice;
+  try{
+    await apiFetch('/api/devices/'+devId+'/pins',{method:'PUT',body:{pins:devicePins[devId]||[]}});
+    addLog(devId,'Pin config disimpan','ok');
+    closeModal('modal-pins');
+    renderControl();
+  }catch(e){alert('Error: '+e.message);}
+}
+
+// ---- DEVICE ----
+function openAddModal(){if(!isAdmin())return;document.getElementById('modal-add').classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 function selType(el){document.querySelectorAll('.type-opt').forEach(o=>o.classList.remove('sel'));el.classList.add('sel');selTypeVal=el.dataset.t;}
-function addDeviceLocal() {
+function addDeviceLocal(){
   if(!isAdmin()) return;
   const id=document.getElementById('m-id').value.trim();
   const name=document.getElementById('m-name').value.trim();
   if(!id||!name){alert('Device ID dan nama wajib diisi');return;}
   if(devices[id]){alert('Device ID sudah ada');return;}
   devices[id]={device_id:id,name,type:selTypeVal,online:false};
+  if(selTypeVal==='gps_tracker') devices[id].device_type='gps_tracker';
   closeModal('modal-add');
-  document.getElementById('m-id').value='';
-  document.getElementById('m-name').value='';
-  renderAll();
-  addLog(id,'Device ditambahkan','info');
+  document.getElementById('m-id').value='';document.getElementById('m-name').value='';
+  renderAll();addLog(id,'Device ditambahkan','info');
 }
-function removeDevice(id) {
-  if(!isAdmin()){addLog('System','Akses ditolak','error');return;}
-  const d=devices[id];
-  if(!confirm('Hapus device "'+(d?.name||id)+'"?')) return;
-  delete devices[id]; renderAll();
-  addLog(id,'Device dihapus','warn');
+function removeDevice(id){
+  if(!isAdmin())return;
+  if(!confirm('Hapus device "'+(devices[id]?.name||id)+'"?')) return;
+  delete devices[id];delete devicePins[id];renderAll();addLog(id,'Device dihapus','warn');
 }
 
-// ---- USER MANAGEMENT ----
-function openUserModal() {
-  if(!isAdmin()) return;
-  document.getElementById('u-name').value='';
-  document.getElementById('u-pass').value='';
-  document.getElementById('u-role').value='viewer';
-  document.getElementById('u-err').textContent='';
-  document.getElementById('modal-user').classList.add('open');
-}
-
-async function loadUsers() {
-  if(!isAdmin()){
-    document.getElementById('user-tbody').innerHTML='';
-    return;
-  }
-  try {
+// ---- USERS ----
+function openUserModal(){if(!isAdmin())return;document.getElementById('u-name').value='';document.getElementById('u-pass').value='';document.getElementById('u-role').value='viewer';document.getElementById('u-err').textContent='';document.getElementById('modal-user').classList.add('open');}
+async function loadUsers(){
+  if(!isAdmin()){document.getElementById('user-tbody').innerHTML='';return;}
+  try{
     const users=await apiFetch('/api/users');
+    if(!users) return;
     document.getElementById('user-tbody').innerHTML=users.map(u=>`
       <tr>
-        <td><strong>${u.username}</strong> ${u.username===username?'<span style="font-size:10px;color:var(--text3)">(Anda)</span>':''}</td>
+        <td><strong>${u.username}</strong>${u.username===username?' <span style="font-size:10px;color:var(--text3)">(Anda)</span>':''}</td>
         <td><span class="role-pill ${u.role}">${u.role}</span></td>
         <td><span style="font-size:11px;color:var(--accent2);font-family:var(--mono)">aktif</span></td>
-        <td>
-          ${u.username!==username?`<button class="del-btn" onclick="deleteUser('${u.username}')"><i class="ti ti-trash" style="font-size:11px"></i></button>`:'—'}
-        </td>
+        <td>${u.username!==username?`<button class="del-btn" onclick="deleteUser('${u.username}')"><i class="ti ti-trash" style="font-size:11px"></i></button>`:'—'}</td>
       </tr>`).join('');
-  } catch(e){addLog('System','Load users error: '+e.message,'error');}
+  }catch(e){addLog('System','Load users error: '+e.message,'error');}
 }
-
-async function addUser() {
-  const name=document.getElementById('u-name').value.trim();
-  const pass=document.getElementById('u-pass').value;
-  const role=document.getElementById('u-role').value;
+async function addUser(){
+  const name=document.getElementById('u-name').value.trim(),pass=document.getElementById('u-pass').value,role=document.getElementById('u-role').value;
   const errEl=document.getElementById('u-err');
   if(!name||!pass){errEl.textContent='Username dan password wajib diisi';return;}
-  try {
-    await apiFetch('/api/users',{method:'POST',body:{username:name,password:pass,role}});
-    closeModal('modal-user');
-    addLog('System','User ditambahkan: '+name+' ('+role+')','ok');
-    loadUsers();
-  } catch(e){errEl.textContent='⚠ '+e.message;}
+  try{await apiFetch('/api/users',{method:'POST',body:{username:name,password:pass,role}});closeModal('modal-user');addLog('System','User: '+name+' ('+role+')','ok');loadUsers();}
+  catch(e){errEl.textContent='⚠ '+e.message;}
 }
-
-async function deleteUser(uname) {
+async function deleteUser(uname){
   if(!confirm('Hapus user "'+uname+'"?')) return;
-  try {
-    await apiFetch('/api/users/'+uname,{method:'DELETE'});
-    addLog('System','User dihapus: '+uname,'warn');
-    loadUsers();
-  } catch(e){addLog('System','Error: '+e.message,'error');}
+  try{await apiFetch('/api/users/'+uname,{method:'DELETE'});addLog('System','User dihapus: '+uname,'warn');loadUsers();}
+  catch(e){addLog('System','Error: '+e.message,'error');}
 }
 
 // ---- LOGS ----
-function addLog(dev,msg,level='info') {
+function addLog(dev,msg,level='info'){
   const t=new Date().toLocaleTimeString('id-ID');
   logs.unshift({time:t,dev,msg,level});
-  if(logs.length>200) logs.pop();
+  if(logs.length>300) logs.pop();
   renderLogs();
 }
-function renderLogs() {
-  const html=(list)=>list.length?list.map(l=>`
-    <div class="log-row">
-      <span class="log-time">${l.time}</span>
-      <span class="log-dev">${l.dev}</span>
-      <span class="log-msg">${l.msg}</span>
-      <span class="log-lvl ${l.level}">${l.level}</span>
-    </div>`).join(''):'<div style="padding:.8rem 1rem;color:var(--text3);font-size:12px">Belum ada log</div>';
+function renderLogs(){
+  const html=(list)=>list.length?list.map(l=>`<div class="log-row"><span class="log-time">${l.time}</span><span class="log-dev">${l.dev}</span><span class="log-msg">${l.msg}</span><span class="log-lvl ${l.level}">${l.level}</span></div>`).join(''):'<div style="padding:.8rem 1rem;color:var(--text3);font-size:12px">Belum ada log</div>';
   document.getElementById('dash-logs').innerHTML=html(logs.slice(0,6));
   document.getElementById('full-logs').innerHTML=html(logs);
   document.getElementById('log-count-dash').textContent=logs.length+' entri';
@@ -834,26 +1113,24 @@ function renderLogs() {
 }
 
 // ---- NAVIGATION ----
-function showPage(name,el) {
+function showPage(name,el){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('page-'+name).classList.add('active');
   if(el) el.classList.add('active');
   if(name==='control') renderControl();
   if(name==='users') loadUsers();
+  if(name==='gps'){setTimeout(()=>gpsMap&&gpsMap.invalidateSize(),200);}
   closeSidebar();
 }
 
 // ---- SETTINGS ----
-function changeServer() {
+function changeServer(){
   const url=document.getElementById('server-url-input').value.trim().replace(/\/$/,'');
   if(!url) return;
-  BASE_URL=url;
-  localStorage.setItem('esp32_server',url);
-  if(ws) ws.close();
-  clearInterval(pollInterval);
-  connectWS();
-  pollInterval=setInterval(fetchDevices,5000);
+  BASE_URL=url;localStorage.setItem('esp32_server',url);
+  if(ws) ws.close();clearInterval(pollInterval);
+  connectWS();pollInterval=setInterval(fetchDevices,5000);
   document.getElementById('set-url').textContent=url;
   document.getElementById('sf-url').textContent='backend: '+url.replace('https://','');
   addLog('System','Server: '+url,'info');
@@ -861,13 +1138,8 @@ function changeServer() {
 
 // ---- AUTO LOGIN ----
 window.addEventListener('load',()=>{
-  const t=localStorage.getItem('esp32_token');
-  const u=localStorage.getItem('esp32_user');
-  const r=localStorage.getItem('esp32_role');
-  if(t&&u){
-    token=t; username=u; userRole=r||'viewer';
-    enterApp();
-  }
+  const t=localStorage.getItem('esp32_token'),u=localStorage.getItem('esp32_user'),r=localStorage.getItem('esp32_role');
+  if(t&&u){token=t;username=u;userRole=r||'viewer';enterApp();}
 });
 </script>
 </body>
