@@ -827,11 +827,66 @@ function initMap(){
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
     attribution:'© OpenStreetMap',maxZoom:19
   }).addTo(gpsMap);
+  // Load semua lokasi terakhir saat peta dibuka pertama kali
+  loadAllLastGPS();
 }
 
-function switchGPSDevice(id){
+async function loadAllLastGPS(){
+  try {
+    const all = await apiFetch('/api/gps/all');
+    if(!all||!all.length) return;
+    all.forEach(loc=>{
+      if(!loc.lat||!loc.lng) return;
+      // Buat marker offline (abu-abu) untuk lokasi terakhir
+      const isOnline = devices[loc.device_id]?.online || false;
+      const color = isOnline ? '#39d353' : '#d29922';
+      const icon = L.divIcon({
+        html:`<div style="background:${color};width:12px;height:12px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 6px ${color}88;opacity:${isOnline?1:0.7}"></div>`,
+        iconSize:[12,12],iconAnchor:[6,6],className:''
+      });
+      const pos=[parseFloat(loc.lat),parseFloat(loc.lng)];
+      const timeStr = loc.time ? new Date(loc.time).toLocaleString('id-ID') : '—';
+      const marker = L.marker(pos,{icon}).addTo(gpsMap);
+      marker.bindPopup(`<b>${loc.name||loc.device_id}</b><br>
+        <span style="color:${isOnline?'green':'orange'}">${isOnline?'🟢 Online':'🟡 Offline'}</span><br>
+        📍 ${parseFloat(loc.lat).toFixed(5)}, ${parseFloat(loc.lng).toFixed(5)}<br>
+        🕐 ${timeStr}`);
+      gpsMarkers[loc.device_id] = marker;
+      addLog(loc.device_id||'GPS','Lokasi terakhir dimuat','info');
+    });
+    // Fit map ke semua marker jika ada lebih dari 1
+    if(all.length>1){
+      const grp=L.featureGroup(Object.values(gpsMarkers));
+      if(Object.keys(gpsMarkers).length) gpsMap.fitBounds(grp.getBounds().pad(0.2));
+    } else if(all.length===1 && all[0].lat){
+      gpsMap.setView([parseFloat(all[0].lat),parseFloat(all[0].lng)],13);
+    }
+  } catch(e){ /* tidak ada GPS data */ }
+}
+
+async function switchGPSDevice(id){
   currentGPSDevice=id;
-  if(id&&devices[id]) updateGPSDisplay(id,devices[id]);
+  if(!id) return;
+  // Tampilkan data dari memory dulu
+  if(devices[id]&&devices[id].lat) updateGPSDisplay(id,devices[id]);
+  // Load lokasi terakhir dari backend (persisten) jika device offline
+  try {
+    const last = await apiFetch('/api/devices/'+id+'/gps/last');
+    if(last && last.lat && last.lng){
+      // Update marker di peta dengan lokasi terakhir
+      updateGPSDisplay(id, last);
+      // Tampilkan indikator bahwa ini lokasi terakhir, bukan real-time
+      const isOnline = devices[id]?.online;
+      if(!isOnline){
+        document.getElementById('gps-update').textContent =
+          '📍 Terakhir: '+new Date(last.time).toLocaleString('id-ID');
+        document.getElementById('gps-update').style.color='var(--warn)';
+      }
+      addLog(id,'Lokasi terakhir dimuat: '+parseFloat(last.lat).toFixed(5)+','+parseFloat(last.lng).toFixed(5),'info');
+    }
+  } catch(e){
+    // Tidak ada data GPS tersimpan — normal untuk device baru
+  }
   loadGPSHistory();
 }
 
@@ -1195,7 +1250,12 @@ function showPage(name,el){
   if(el) el.classList.add('active');
   if(name==='control') renderControl();
   if(name==='users') loadUsers();
-  if(name==='gps'){setTimeout(()=>gpsMap&&gpsMap.invalidateSize(),200);}
+  if(name==='gps'){
+    setTimeout(()=>{
+      gpsMap&&gpsMap.invalidateSize();
+      loadAllLastGPS();
+    },200);
+  }
   closeSidebar();
 }
 
