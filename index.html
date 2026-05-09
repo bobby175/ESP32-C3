@@ -611,21 +611,56 @@ function connectWS() {
     ws.onopen=()=>{setWS(true);addLog('System','WebSocket connected','ok');};
     ws.onmessage=(e)=>{
       const msg=JSON.parse(e.data);
-      if(msg.type==='init'){msg.devices.forEach(d=>{if(d.device_id)devices[d.device_id]=d;});}
+      if(msg.type==='init'){
+        msg.devices.forEach(d=>{if(d.device_id)devices[d.device_id]=d;});
+        // Auto pilih device pertama untuk chart
+        const withTemp=Object.values(devices).filter(d=>d.temp!=null);
+        if(!chartDeviceId && withTemp.length){
+          chartDeviceId=withTemp[0].device_id;
+          const cs=document.getElementById('chart-device-select');
+          if(cs) cs.value=chartDeviceId;
+        }
+      }
       else if(['sensor','status','gps'].includes(msg.type)){
-        const id=msg.device_id,d=msg.data;
-        devices[id]={...devices[id]||{},...d,device_id:id,online:msg.type!=='status'||d.status!=='offline',last_seen:msg.timestamp};
+        const id=msg.device_id, d=msg.data;
+        devices[id]={...devices[id]||{},...d,device_id:id,
+          online:msg.type!=='status'||d.status!=='offline',
+          last_seen:msg.timestamp};
         if(msg.type==='sensor'){
-          if(!tempHistory[id]) tempHistory[id]=[];
-          tempHistory[id].push({t:new Date().toLocaleTimeString('id-ID'),v:parseFloat(d.temp)||0,h:parseFloat(d.humidity)||0});
-          if(tempHistory[id].length>60) tempHistory[id].shift();
-          if(chartDeviceId===id) updateChart(id);
-          addLog(id,`T:${d.temp}°C H:${d.humidity}%`,'info');
+          // parseFloat agar string "27.3" jadi angka 27.3
+          const tv=parseFloat(d.temp), hv=parseFloat(d.humidity);
+          if(!isNaN(tv)){
+            if(!tempHistory[id]) tempHistory[id]=[];
+            tempHistory[id].push({t:new Date().toLocaleTimeString('id-ID'),v:tv,h:isNaN(hv)?0:hv});
+            if(tempHistory[id].length>60) tempHistory[id].shift();
+            // Auto set chart device jika belum dipilih
+            if(!chartDeviceId){
+              chartDeviceId=id;
+              const cs=document.getElementById('chart-device-select');
+              if(cs) cs.value=id;
+            }
+            // Update chart jika ini device yang sedang dipilih
+            if(chartDeviceId===id && chartCtx) updateChart(id);
+          }
+          addLog(id,'T:'+d.temp+'C H:'+d.humidity+'%','info');
         }
         if(msg.type==='gps'&&id===currentGPSDevice) updateGPSDisplay(id,d);
         if(msg.type==='status'&&d.status==='offline') addLog(id,'Device offline','warn');
       }
+      // Handle hapus device dari browser lain
+      if(msg.type==='device_deleted'){
+        const did=msg.device_id;
+        delete devices[did]; delete devicePins[did]; delete tempHistory[did];
+        if(chartDeviceId===did){ chartDeviceId=null; drawChart([],[]); }
+        addLog(did,'Device dihapus oleh admin','warn');
+      }
+      // Handle rename dari browser lain
+      if(msg.type==='device_updated'){
+        const did=msg.device_id;
+        if(devices[did]) devices[did]={...devices[did],...msg.data};
+      }
       renderAll();
+      updateDeviceSelects();
     };
     ws.onerror=()=>setWS(false);
     ws.onclose=()=>{setWS(false);addLog('System','WS putus, retry 5s...','warn');setTimeout(connectWS,5000);};
@@ -641,11 +676,29 @@ async function fetchDevices() {
   try {
     const list=await apiFetch('/api/devices');
     if(!list) return;
-    list.forEach(d=>{if(d.device_id) devices[d.device_id]=d;});
+    list.forEach(d=>{
+      if(!d.device_id) return;
+      devices[d.device_id]=d;
+      // Isi tempHistory dari poll data jika WebSocket belum kirim data
+      const tv=parseFloat(d.temp), hv=parseFloat(d.humidity);
+      if(!isNaN(tv)){
+        if(!tempHistory[d.device_id]) tempHistory[d.device_id]=[];
+        // Jangan dobel push jika sudah ada data dari WS
+        const hist=tempHistory[d.device_id];
+        const lastEntry=hist[hist.length-1];
+        const nowStr=new Date().toLocaleTimeString('id-ID');
+        if(!lastEntry||lastEntry.v!==tv){
+          hist.push({t:nowStr,v:tv,h:isNaN(hv)?0:hv});
+          if(hist.length>60) hist.shift();
+        }
+      }
+    });
     const stats=await apiFetch('/api/stats');
     if(!stats) return;
     updateStats(stats);
     renderAll();
+    // Refresh chart setelah poll
+    if(chartDeviceId && chartCtx) updateChart(chartDeviceId);
     const now=new Date().toLocaleTimeString('id-ID');
     document.getElementById('last-update').textContent='Update: '+now;
     document.getElementById('sf-update').textContent='sync: '+now;
@@ -666,17 +719,18 @@ function updateStats(s){
 
 function updateDeviceSelects(){
   const list=Object.values(devices);
-  // Chart select
+  // Chart select — temp bisa string atau number, cukup cek tidak undefined
+  const withTemp=list.filter(d=>d.temp!==undefined&&d.temp!==null&&d.temp!=='');
   const cs=document.getElementById('chart-device-select');
   const prev=cs.value;
   cs.innerHTML='<option value="">Pilih device...</option>';
-  list.filter(d=>d.temp!=null).forEach(d=>{
+  withTemp.forEach(d=>{
     cs.innerHTML+=`<option value="${d.device_id}" ${d.device_id===prev?'selected':''}>${d.name||d.device_id}</option>`;
   });
-  if(!chartDeviceId && list.filter(d=>d.temp!=null).length){
-    chartDeviceId=list.find(d=>d.temp!=null)?.device_id;
+  if(!chartDeviceId && withTemp.length){
+    chartDeviceId=withTemp[0].device_id;
     cs.value=chartDeviceId||'';
-    if(chartDeviceId) updateChart(chartDeviceId);
+    if(chartDeviceId && chartCtx) updateChart(chartDeviceId);
   }
   // GPS select
   const gs=document.getElementById('gps-device-select');
@@ -880,8 +934,9 @@ function renderDevices(id,list,showDel){
           <div class="metric"><div class="val">${d.uptime!=null?fmtUp(d.uptime):'—'}</div><div class="key">Uptime</div></div>
         `}
       </div>
-      ${showDel&&isAdmin()?`<div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border);display:flex;gap:6px">
+      ${showDel&&isAdmin()?`<div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border);display:flex;gap:6px;flex-wrap:wrap">
         <button class="del-btn" onclick="openPinModal('${d.device_id}')"><i class="ti ti-settings" style="font-size:11px"></i> Pin</button>
+        <button class="del-btn" onclick="renameDevice('${d.device_id}')" style="color:var(--accent3)"><i class="ti ti-pencil" style="font-size:11px"></i> Nama</button>
         <button class="del-btn" onclick="removeDevice('${d.device_id}')"><i class="ti ti-trash" style="font-size:11px"></i> Hapus</button>
       </div>`:''}
     </div>`;
@@ -1062,10 +1117,30 @@ function addDeviceLocal(){
   document.getElementById('m-id').value='';document.getElementById('m-name').value='';
   renderAll();addLog(id,'Device ditambahkan','info');
 }
-function removeDevice(id){
-  if(!isAdmin())return;
-  if(!confirm('Hapus device "'+(devices[id]?.name||id)+'"?')) return;
-  delete devices[id];delete devicePins[id];renderAll();addLog(id,'Device dihapus','warn');
+async function removeDevice(id){
+  if(!isAdmin()){addLog('System','Akses ditolak','error');return;}
+  const name=devices[id]?.name||id;
+  if(!confirm('Hapus device "'+name+'" secara permanen dari server?\n\nPerhatian: device akan muncul kembali jika ESP32 reconnect dengan DEVICE_ID yang sama.')) return;
+  try{
+    await apiFetch('/api/devices/'+id,{method:'DELETE'});
+    delete devices[id]; delete devicePins[id]; delete tempHistory[id];
+    renderAll(); updateDeviceSelects();
+    addLog(id,'Device dihapus dari server','warn');
+    if(chartDeviceId===id){ chartDeviceId=null; drawChart([],[]); }
+  }catch(e){addLog('System','Gagal hapus: '+e.message,'error');}
+}
+
+async function renameDevice(id){
+  if(!isAdmin()){addLog('System','Akses ditolak','error');return;}
+  const oldName=devices[id]?.name||id;
+  const newName=prompt('Nama baru untuk device "'+oldName+'":', oldName);
+  if(!newName||newName.trim()===''||newName===oldName) return;
+  try{
+    await apiFetch('/api/devices/'+id,{method:'PATCH',body:{name:newName.trim()}});
+    devices[id].name=newName.trim();
+    renderAll(); updateDeviceSelects();
+    addLog(id,'Device diubah nama: '+newName,'ok');
+  }catch(e){addLog('System','Gagal rename: '+e.message,'error');}
 }
 
 // ---- USERS ----
