@@ -20,7 +20,16 @@
   --font:'Space Grotesk',sans-serif;--mono:'JetBrains Mono',monospace;
   --sidebar-w:260px;--topbar-h:56px;
 }
-body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;min-height:100vh;overflow-x:hidden}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;min-height:100vh;overflow-x:hidden;transition:background .3s,color .3s}
+
+/* LIGHT THEME */
+body.light{
+  --bg:#f0f2f5;--bg2:#ffffff;--bg3:#f8f9fa;--bg4:#e9ecef;
+  --border:#dee2e6;--border2:#adb5bd;
+  --text:#212529;--text2:#6c757d;--text3:#adb5bd;
+  --card:#ffffff;
+}
+body.light .topbar,body.light .sidebar{box-shadow:0 1px 4px rgba(0,0,0,.1)}
 
 /* TOPBAR */
 .topbar{height:var(--topbar-h);background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 1.2rem;position:fixed;top:0;left:0;right:0;z-index:200}
@@ -234,9 +243,36 @@ canvas.chart{width:100%!important;height:160px!important}
 .login-btn:disabled{opacity:.4;cursor:not-allowed}
 .login-err{color:var(--accent3);font-size:12px;margin-top:8px;text-align:center;min-height:18px}
 .login-hint{font-size:11px;color:var(--text3);text-align:center;margin-top:.8rem}
+
+/* Anti-select untuk elemen sensitif */
+.topbar-right, .sidebar-footer, .ws-pill {
+  user-select: none;
+  -webkit-user-select: none;
+}
+/* Sembunyikan semua text saat print */
+@media print { body { display: none !important; } }
+
+/* TOAST NOTIFICATION */
+.toast-container{position:fixed;top:66px;right:1rem;z-index:500;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.toast{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--text);max-width:300px;display:flex;align-items:flex-start;gap:8px;pointer-events:all;animation:slideIn .3s ease;box-shadow:0 4px 16px rgba(0,0,0,.3)}
+.toast.warn{border-left:3px solid var(--warn)}
+.toast.error{border-left:3px solid var(--accent3)}
+.toast.ok{border-left:3px solid var(--accent2)}
+.toast.info{border-left:3px solid var(--accent)}
+@keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+@keyframes slideOut{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(20px)}}
+
+/* GEOFENCE on map */
+.geofence-circle{ stroke:var(--cyan); fill:rgba(57,211,83,.08); }
+
+/* Card style used in alerts */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1rem;margin-bottom:.6rem}
 </style>
 </head>
 <body>
+
+<!-- TOAST -->
+<div class="toast-container" id="toast-container"></div>
 
 <!-- LOGIN -->
 <div id="login-screen">
@@ -264,6 +300,8 @@ canvas.chart{width:100%!important;height:160px!important}
       <div class="ws-pill"><div class="ws-dot" id="ws-dot"></div><span id="ws-label">Connecting</span></div>
       <span class="role-pill" id="role-pill">—</span>
       <div class="user-chip"><i class="ti ti-user" style="font-size:13px"></i><span id="topbar-user">—</span></div>
+      <button class="logout-btn" onclick="toggleLang()" title="Bahasa" id="lang-btn" style="font-size:11px;width:auto;padding:0 8px">ID</button>
+      <button class="logout-btn" onclick="toggleTheme()" title="Theme" id="theme-btn"><i class="ti ti-moon" style="font-size:15px"></i></button>
       <button class="logout-btn" onclick="doLogout()" title="Logout"><i class="ti ti-logout" style="font-size:15px"></i></button>
     </div>
   </div>
@@ -277,6 +315,8 @@ canvas.chart{width:100%!important;height:160px!important}
       <div class="nav-item" id="nav-control" onclick="showPage('control',this)"><i class="ti ti-adjustments-horizontal"></i>Control Panel</div>
       <div class="nav-item" id="nav-gps" onclick="showPage('gps',this)"><i class="ti ti-map-pin"></i>GPS Tracker</div>
       <div class="nav-item" id="nav-logs" onclick="showPage('logs',this)"><i class="ti ti-terminal-2"></i>Logs</div>
+      <div class="nav-section">Fitur</div>
+      <div class="nav-item" id="nav-alerts" onclick="showPage('alerts',this)"><i class="ti ti-bell"></i>Alert & Jadwal<i class="ti ti-lock nav-lock" id="alerts-lock"></i></div>
       <div class="nav-section">Admin</div>
       <div class="nav-item" id="nav-users" onclick="showPage('users',this)"><i class="ti ti-users"></i>Kelola User<i class="ti ti-lock nav-lock" id="users-lock"></i></div>
       <div class="nav-section">Sistem</div>
@@ -357,9 +397,48 @@ canvas.chart{width:100%!important;height:160px!important}
       </div>
       <div id="gps-map"></div>
       <div style="margin-top:1rem">
+        <div class="sec-title" style="margin-bottom:.6rem">
+          <span>Geofence</span>
+          <div style="display:flex;gap:6px">
+            <button class="sec-btn" id="geofence-btn" onclick="setupGeofence()"><i class="ti ti-circle-dashed" style="font-size:12px"></i> Set Area</button>
+            <button class="sec-btn" onclick="deleteGeofence()" style="color:var(--accent3)"><i class="ti ti-trash" style="font-size:12px"></i></button>
+          </div>
+        </div>
+        <div id="geofence-info" class="card" style="font-size:12px;color:var(--text2);margin-bottom:1rem">Belum ada geofence untuk tracker ini.</div>
+      </div>
+      <div>
         <div class="sec-title"><span>Riwayat Posisi</span><button class="sec-btn" onclick="loadGPSHistory()"><i class="ti ti-refresh" style="font-size:12px"></i>Refresh</button></div>
         <div class="log-wrap"><div class="log-head"><span>koordinat terakhir</span><span id="gps-hist-count">0 titik</span></div>
         <div class="log-body" id="gps-hist-body" style="max-height:200px;overflow-y:auto"></div></div>
+      </div>
+    </div>
+
+    <!-- ALERTS & SCHEDULES -->
+    <div class="page" id="page-alerts">
+      <div class="page-header">
+        <div class="page-header-text"><h1 data-i18n="alert_title">Alert & Jadwal</h1><p data-i18n="alert_sub">Notifikasi suhu, jadwal relay otomatis, geofencing GPS</p></div>
+        <div class="page-actions" id="alert-actions" style="display:none">
+          <button class="sec-btn" onclick="openAlertModal()"><i class="ti ti-bell-plus" style="font-size:12px"></i> Alert</button>
+          <button class="sec-btn" onclick="openScheduleModal()"><i class="ti ti-clock-plus" style="font-size:12px"></i> Jadwal</button>
+        </div>
+      </div>
+      <div id="notice-alerts"></div>
+
+      <!-- Alert Config -->
+      <div class="sec-title"><span data-i18n="alert_sensor">Batas Sensor</span></div>
+      <div id="alert-list"></div>
+
+      <!-- Schedules -->
+      <div class="sec-title" style="margin-top:1rem"><span data-i18n="alert_schedule">Jadwal Relay Otomatis</span></div>
+      <div id="schedule-list"></div>
+
+      <!-- Telegram Config -->
+      <div class="sec-title" style="margin-top:1rem"><span data-i18n="alert_telegram">Notifikasi Telegram</span></div>
+      <div class="card">
+        <div style="font-size:12px;color:var(--text2);margin-bottom:.8rem" data-i18n="telegram_hint">Isi TELEGRAM_BOT_TOKEN dan TELEGRAM_CHAT_ID di Railway Variables.</div>
+        <button class="sec-btn" onclick="testTelegram()" style="width:100%;justify-content:center">
+          <i class="ti ti-brand-telegram" style="font-size:13px;color:#29b6f6"></i> <span data-i18n="telegram_test">Kirim Pesan Tes</span>
+        </button>
       </div>
     </div>
 
@@ -387,6 +466,62 @@ canvas.chart{width:100%!important;height:160px!important}
       </div></div>
     </div>
 
+    <!-- ALERTS -->
+    <div class="page" id="page-alerts">
+      <div class="page-header">
+        <div class="page-header-text"><h1>Alert & Notifikasi</h1><p>Atur batas suhu dan notifikasi Telegram</p></div>
+        <div class="page-actions">
+          <select class="tracker-select" id="alert-device-sel" onchange="loadAlerts(this.value)">
+            <option value="">Pilih device...</option>
+          </select>
+          <button class="sec-btn" id="btn-add-alert" onclick="openAlertModal()" style="display:none"><i class="ti ti-plus" style="font-size:12px"></i>Tambah Alert</button>
+        </div>
+      </div>
+      <div class="notice info" id="telegram-status" style="margin-bottom:1rem">
+        <i class="ti ti-brand-telegram"></i>
+        <span id="tg-status-text">Cek status Telegram...</span>
+        <button class="sec-btn" style="margin-left:auto" onclick="testTelegram()"><i class="ti ti-send" style="font-size:11px"></i> Test</button>
+      </div>
+      <div class="settings-card" id="alert-list-wrap">
+        <h3>Alert Rules</h3>
+        <div id="alert-list"><div style="color:var(--text3);font-size:12px">Pilih device untuk melihat alert rules</div></div>
+      </div>
+    </div>
+
+    <!-- SCHEDULE -->
+    <div class="page" id="page-schedule">
+      <div class="page-header">
+        <div class="page-header-text"><h1>Jadwal Relay</h1><p>Atur relay ON/OFF otomatis berdasarkan jam</p></div>
+        <div class="page-actions">
+          <select class="tracker-select" id="sch-device-sel" onchange="loadSchedules(this.value)">
+            <option value="">Pilih device...</option>
+          </select>
+          <button class="sec-btn" id="btn-add-sch" onclick="openSchModal()" style="display:none"><i class="ti ti-plus" style="font-size:12px"></i>Tambah Jadwal</button>
+        </div>
+      </div>
+      <div class="settings-card">
+        <h3>Jadwal Aktif</h3>
+        <div id="sch-list"><div style="color:var(--text3);font-size:12px">Pilih device untuk melihat jadwal</div></div>
+      </div>
+    </div>
+
+    <!-- GEOFENCE -->
+    <div class="page" id="page-geofence">
+      <div class="page-header">
+        <div class="page-header-text"><h1>Geofence</h1><p>Alert saat tracker keluar dari zona</p></div>
+        <div class="page-actions">
+          <select class="tracker-select" id="geo-device-sel" onchange="loadGeofences(this.value)">
+            <option value="">Pilih tracker...</option>
+          </select>
+          <button class="sec-btn" id="btn-add-geo" onclick="openGeoModal()" style="display:none"><i class="ti ti-plus" style="font-size:12px"></i>Tambah Zona</button>
+        </div>
+      </div>
+      <div class="settings-card">
+        <h3>Zona Aktif</h3>
+        <div id="geo-list"><div style="color:var(--text3);font-size:12px">Pilih tracker GPS untuk melihat zona</div></div>
+      </div>
+    </div>
+
     <!-- SETTINGS -->
     <div class="page" id="page-settings">
       <div class="page-header"><div class="page-header-text"><h1>Settings</h1><p>Konfigurasi sistem</p></div></div>
@@ -402,11 +537,56 @@ canvas.chart{width:100%!important;height:160px!important}
         <div class="settings-row"><span class="settings-key"><i class="ti ti-shield-check" style="color:var(--accent2)"></i>Role</span><span class="role-pill" id="set-role">—</span></div>
       </div>
       <div class="settings-card">
-        <h3>Ganti Server URL</h3>
+        <h3>Tampilan</h3>
+        <div class="settings-row">
+          <span class="settings-key"><i class="ti ti-moon"></i>Mode Gelap/Terang</span>
+          <div class="toggle on" id="theme-toggle" onclick="toggleTheme(this)"></div>
+        </div>
+        <div class="settings-row">
+          <span class="settings-key"><i class="ti ti-language"></i>Bahasa</span>
+          <select class="form-select" style="width:auto;padding:4px 8px;font-size:12px" id="lang-select" onchange="setLang(this.value)">
+            <option value="id">🇮🇩 Indonesia</option>
+            <option value="en">🇬🇧 English</option>
+          </select>
+        </div>
+      </div>
+      <div class="settings-card">
+        <h3>Ganti Password</h3>
+        <div class="form-row"><label class="form-label">Password Lama</label><input type="password" class="form-input" id="pass-old" placeholder="••••••••"></div>
+        <div class="form-row"><label class="form-label">Password Baru</label><input type="password" class="form-input" id="pass-new" placeholder="min. 6 karakter"></div>
+        <div class="form-row"><label class="form-label">Konfirmasi Password Baru</label><input type="password" class="form-input" id="pass-confirm" placeholder="ulangi password baru"></div>
+        <div id="pass-err" style="color:var(--accent3);font-size:12px;min-height:16px;margin-bottom:.5rem"></div>
+        <button class="btn-primary" style="width:100%;padding:8px" onclick="changePassword()">Simpan Password</button>
+      </div>
+      <div class="settings-card">
+        <h3 data-i18n="settings_server">Ganti Server URL</h3>
         <div class="form-row" style="margin:0">
           <input type="text" class="form-input" id="server-url-input" placeholder="https://namamu.up.railway.app">
-          <button class="btn-primary" style="margin-top:8px;width:100%;padding:8px" onclick="changeServer()">Simpan &amp; Reconnect</button>
+          <button class="btn-primary" style="margin-top:8px;width:100%;padding:8px" onclick="changeServer()" data-i18n="settings_save">Simpan &amp; Reconnect</button>
         </div>
+      </div>
+      <div class="settings-card">
+        <h3 data-i18n="settings_password">Ganti Password</h3>
+        <div class="form-row"><input type="password" class="form-input" id="old-pass" placeholder="Password lama"></div>
+        <div class="form-row"><input type="password" class="form-input" id="new-pass" placeholder="Password baru (min 6 karakter)"></div>
+        <div id="pass-err" style="color:var(--accent3);font-size:12px;min-height:16px;margin-bottom:.5rem"></div>
+        <button class="btn-primary" style="width:100%;padding:8px" onclick="changePassword()" data-i18n="settings_change_pass">Ubah Password</button>
+      </div>
+      <div class="settings-card">
+        <h3 data-i18n="settings_storage">Penyimpanan Data</h3>
+        <div class="settings-row"><span class="settings-key"><i class="ti ti-database"></i><span data-i18n="settings_storage_info">Info Storage</span></span>
+          <button class="sec-btn" onclick="loadStorageInfo()" data-i18n="settings_check">Cek</button></div>
+        <div id="storage-info" style="font-size:11px;color:var(--text2);font-family:var(--mono);margin-top:.5rem"></div>
+        <button class="sec-btn" style="margin-top:.5rem;width:100%;justify-content:center" onclick="manualSave()">
+          <i class="ti ti-device-floppy" style="font-size:12px"></i> <span data-i18n="settings_manual_save">Simpan Sekarang</span></button>
+      </div>
+      <div class="settings-card">
+        <h3>Export Data</h3>
+        <div class="settings-row">
+          <span class="settings-key"><i class="ti ti-download"></i>Export sensor ke CSV</span>
+          <select class="form-select" style="width:auto;padding:4px 8px;font-size:12px" id="export-device-sel"></select>
+        </div>
+        <button class="sec-btn" style="margin-top:.5rem;width:100%;justify-content:center" onclick="exportCSV()"><i class="ti ti-file-type-csv" style="font-size:13px"></i>&nbsp;Download CSV</button>
       </div>
     </div>
 
@@ -486,6 +666,85 @@ canvas.chart{width:100%!important;height:160px!important}
   </div>
 </div>
 
+<!-- Modal Alert -->
+<div class="modal-bg" id="modal-alert">
+  <div class="modal">
+    <div class="modal-title"><span>Tambah Alert Rule</span><button class="modal-close" onclick="closeModal('modal-alert')">&times;</button></div>
+    <div class="form-row"><label class="form-label">Nama Alert</label><input type="text" class="form-input" id="al-name" placeholder="Suhu Terlalu Tinggi"></div>
+    <div class="form-row"><label class="form-label">Field</label>
+      <select class="form-select" id="al-field">
+        <option value="temp">Suhu (temp)</option>
+        <option value="humidity">Humidity</option>
+        <option value="rssi">RSSI (sinyal)</option>
+      </select>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div class="form-row"><label class="form-label">Operator</label>
+        <select class="form-select" id="al-op">
+          <option value=">">&gt; lebih dari</option>
+          <option value=">=">&gt;= lebih dari sama dengan</option>
+          <option value="<">&lt; kurang dari</option>
+          <option value="<=">&lt;= kurang dari sama dengan</option>
+        </select>
+      </div>
+      <div class="form-row"><label class="form-label">Nilai</label><input type="number" class="form-input" id="al-val" placeholder="35"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('modal-alert')">Batal</button>
+      <button class="btn-primary" onclick="addAlert()">Tambah Alert</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Schedule -->
+<div class="modal-bg" id="modal-sch">
+  <div class="modal">
+    <div class="modal-title"><span>Tambah Jadwal Relay</span><button class="modal-close" onclick="closeModal('modal-sch')">&times;</button></div>
+    <div class="form-row"><label class="form-label">Nama Jadwal</label><input type="text" class="form-input" id="sch-name" placeholder="Lampu Pagi"></div>
+    <div class="form-row"><label class="form-label">GPIO Pin</label>
+      <select class="form-select" id="sch-pin"></select>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div class="form-row"><label class="form-label">Jam ON</label><input type="time" class="form-input" id="sch-on"></div>
+      <div class="form-row"><label class="form-label">Jam OFF</label><input type="time" class="form-input" id="sch-off"></div>
+    </div>
+    <div class="form-row">
+      <label class="form-label">Hari Aktif</label>
+      <div style="display:flex;gap:6px;flex-wrap:wrap" id="sch-days">
+        <label style="font-size:12px;display:flex;align-items:center;gap:4px"><input type="checkbox" value="mon" checked> Sen</label>
+        <label style="font-size:12px;display:flex;align-items:center;gap:4px"><input type="checkbox" value="tue" checked> Sel</label>
+        <label style="font-size:12px;display:flex;align-items:center;gap:4px"><input type="checkbox" value="wed" checked> Rab</label>
+        <label style="font-size:12px;display:flex;align-items:center;gap:4px"><input type="checkbox" value="thu" checked> Kam</label>
+        <label style="font-size:12px;display:flex;align-items:center;gap:4px"><input type="checkbox" value="fri" checked> Jum</label>
+        <label style="font-size:12px;display:flex;align-items:center;gap:4px"><input type="checkbox" value="sat" checked> Sab</label>
+        <label style="font-size:12px;display:flex;align-items:center;gap:4px"><input type="checkbox" value="sun" checked> Min</label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('modal-sch')">Batal</button>
+      <button class="btn-primary" onclick="addSchedule()">Tambah Jadwal</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Geofence -->
+<div class="modal-bg" id="modal-geo">
+  <div class="modal">
+    <div class="modal-title"><span>Tambah Zona Geofence</span><button class="modal-close" onclick="closeModal('modal-geo')">&times;</button></div>
+    <div class="form-row"><label class="form-label">Nama Zona</label><input type="text" class="form-input" id="geo-name" placeholder="Area Rumah"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div class="form-row"><label class="form-label">Latitude</label><input type="number" class="form-input" id="geo-lat" placeholder="-6.9147" step="0.000001"></div>
+      <div class="form-row"><label class="form-label">Longitude</label><input type="number" class="form-input" id="geo-lng" placeholder="107.6088" step="0.000001"></div>
+    </div>
+    <div class="form-row"><label class="form-label">Radius (meter)</label><input type="number" class="form-input" id="geo-radius" placeholder="100" min="10" max="10000"></div>
+    <div class="notice info" style="margin:0 0 .5rem"><i class="ti ti-info-circle"></i>Tip: Klik lokasi di peta GPS untuk mendapat koordinat, lalu isi di sini.</div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('modal-geo')">Batal</button>
+      <button class="btn-primary" onclick="addGeofence()">Tambah Zona</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ============================================================
 let BASE_URL = 'https://projectbelajar-production.up.railway.app';
@@ -505,21 +764,40 @@ const pinTypeColors = {relay:'#d29922',pwm:'#58a6ff',servo:'#bc8cff',input:'#8b9
 
 const isAdmin = () => userRole === 'admin';
 
-// ---- AUTO LOGOUT on 401 ----
+// ---- SECURE API FETCH ----
 async function apiFetch(path, opts={}) {
   const res = await fetch(BASE_URL+path, {
     ...opts,
-    headers:{'Content-Type':'application/json','Authorization':'Bearer '+token,...(opts.headers||{})},
-    body: opts.body ? JSON.stringify(opts.body) : undefined
+    headers:{
+      'Content-Type':'application/json',
+      'Authorization':'Bearer '+token,
+      'X-Requested-With':'XMLHttpRequest',  // anti-CSRF hint
+      ...(opts.headers||{})
+    },
+    body: opts.body ? JSON.stringify(opts.body) : undefined,
+    credentials: 'omit',  // tidak kirim cookie pihak lain
   });
-  if (res.status === 401) {
-    // Token expired — auto logout
-    localStorage.clear();
+  if (res.status === 401 || res.status === 403) {
+    // Token expired atau tidak valid — auto logout
+    _clearSession();
     location.reload();
     return;
   }
+  if (res.status === 429) {
+    const d = await res.json();
+    addLog('System', d.detail || 'Rate limit - tunggu 1 menit', 'warn');
+    throw new Error(d.detail || 'Rate limit exceeded');
+  }
   if (!res.ok) { const d=await res.json(); throw new Error(d.detail||res.statusText); }
   return res.json();
+}
+
+function _clearSession() {
+  // Hapus semua data sesi dari localStorage
+  localStorage.removeItem('esp32_token');
+  localStorage.removeItem('esp32_user');
+  localStorage.removeItem('esp32_role');
+  token=''; username=''; userRole='';
 }
 
 // ---- SIDEBAR ----
@@ -548,7 +826,12 @@ async function doLogin() {
     localStorage.setItem('esp32_token',token);
     localStorage.setItem('esp32_user',username);
     localStorage.setItem('esp32_role',userRole);
+    // Simpan waktu expire untuk cek client-side
+    if(data.expires_at){
+      localStorage.setItem('esp32_expires', new Date(data.expires_at).getTime());
+    }
     enterApp();
+    showToast('👋 Selamat datang, '+username+'!','ok',3000);
   } catch(e){err.textContent='⚠ '+e.message;}
   btn.disabled=false;btn.textContent='MASUK';
 }
@@ -568,27 +851,35 @@ function enterApp() {
   const sr=document.getElementById('set-role');
   sr.textContent=userRole; sr.className='role-pill '+userRole;
   applyRoleUI();
+  applyTheme();
+  applyI18n();
   initChart();
   initMap();
   startApp();
   addLog('System','Login: '+username+' ('+userRole+')','ok');
+  // Restore halaman terakhir setelah data selesai dimuat
+  setTimeout(restoreActivePage, 600);
 }
 
 async function doLogout() {
   try{await apiFetch('/api/logout',{method:'POST'});}catch(e){}
-  localStorage.clear();
+  _clearSession();
+  sessionStorage.removeItem('esp32_active_page');
   if(ws) ws.close();
   clearInterval(pollInterval);
-  devices={};
+  devices={}; devicePins={}; tempHistory={};
   document.getElementById('main-app').style.display='none';
   document.getElementById('login-screen').style.display='flex';
   document.getElementById('inp-pass').value='';
+  document.getElementById('inp-user').value='';
 }
 
 // ---- ROLE UI ----
 function applyRoleUI() {
   document.getElementById('add-device-btn').classList.toggle('locked',!isAdmin());
   document.getElementById('users-lock').style.display=isAdmin()?'none':'';
+  const alLock=document.getElementById('alerts-lock');
+  if(alLock) alLock.style.display=isAdmin()?'none':'';
   const addUserBtn=document.getElementById('btn-add-user');
   if(addUserBtn) addUserBtn.style.display=isAdmin()?'flex':'none';
   const notices=[
@@ -646,6 +937,20 @@ function connectWS() {
         }
         if(msg.type==='gps'&&id===currentGPSDevice) updateGPSDisplay(id,d);
         if(msg.type==='status'&&d.status==='offline') addLog(id,'Device offline','warn');
+      }
+      // Handle alert notifikasi
+      if(msg.type==='alert'){
+        const alertMsg=msg.message.replace(/<[^>]+>/g,'');
+        addLog(msg.device_id||'Alert', alertMsg, 'warn');
+        // Tampilkan toast notifikasi
+        showToast('⚠ '+alertMsg, 'warn');
+      }
+      if(msg.type==='geofence_exit'){
+        addLog(msg.device_id,'Keluar geofence! Jarak: '+Math.round(msg.distance)+'m','error');
+        showToast('🚨 '+devices[msg.device_id]?.name+' keluar area!','error');
+      }
+      if(msg.type==='scheduler'){
+        addLog(msg.device_id,'⏰ Jadwal: GPIO'+msg.pin+' → '+(msg.state?'ON':'OFF'),'ok');
       }
       // Handle hapus device dari browser lain
       if(msg.type==='device_deleted'){
@@ -869,6 +1174,8 @@ async function switchGPSDevice(id){
   if(!id) return;
   // Tampilkan data dari memory dulu
   if(devices[id]&&devices[id].lat) updateGPSDisplay(id,devices[id]);
+  // Load geofence info
+  loadGeofenceInfo();
   // Load lokasi terakhir dari backend (persisten) jika device offline
   try {
     const last = await apiFetch('/api/devices/'+id+'/gps/last');
@@ -992,6 +1299,7 @@ function renderDevices(id,list,showDel){
       ${showDel&&isAdmin()?`<div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border);display:flex;gap:6px;flex-wrap:wrap">
         <button class="del-btn" onclick="openPinModal('${d.device_id}')"><i class="ti ti-settings" style="font-size:11px"></i> Pin</button>
         <button class="del-btn" onclick="renameDevice('${d.device_id}')" style="color:var(--accent3)"><i class="ti ti-pencil" style="font-size:11px"></i> Nama</button>
+        <button class="del-btn" onclick="exportCSV('${d.device_id}')" style="color:var(--accent2)"><i class="ti ti-file-spreadsheet" style="font-size:11px"></i> CSV</button>
         <button class="del-btn" onclick="removeDevice('${d.device_id}')"><i class="ti ti-trash" style="font-size:11px"></i> Hapus</button>
       </div>`:''}
     </div>`;
@@ -1250,13 +1558,23 @@ function showPage(name,el){
   if(el) el.classList.add('active');
   if(name==='control') renderControl();
   if(name==='users') loadUsers();
+  if(name==='alerts') loadAlertPage();
   if(name==='gps'){
     setTimeout(()=>{
       gpsMap&&gpsMap.invalidateSize();
       loadAllLastGPS();
     },200);
   }
+  // Simpan halaman aktif agar tidak kembali ke dashboard saat refresh
+  sessionStorage.setItem('esp32_active_page', name);
   closeSidebar();
+}
+
+function restoreActivePage(){
+  const saved = sessionStorage.getItem('esp32_active_page');
+  if(!saved || saved === 'dashboard') return; // default sudah dashboard
+  const navEl = document.getElementById('nav-'+saved);
+  if(navEl) showPage(saved, navEl);
 }
 
 // ---- SETTINGS ----
@@ -1271,10 +1589,508 @@ function changeServer(){
   addLog('System','Server: '+url,'info');
 }
 
+// ============================================================
+// TOAST NOTIFICATIONS
+// ============================================================
+function showToast(msg, level='info', duration=4000){
+  const container=document.getElementById('toast-container');
+  const toast=document.createElement('div');
+  toast.className=`toast ${level}`;
+  const icon={ok:'ti-check',warn:'ti-alert-triangle',error:'ti-x-circle',info:'ti-info-circle'}[level]||'ti-info-circle';
+  toast.innerHTML=`<i class="ti ${icon}" style="font-size:14px;flex-shrink:0;margin-top:1px"></i><span>${msg}</span>`;
+  container.appendChild(toast);
+  setTimeout(()=>{
+    toast.style.animation='slideOut .3s ease forwards';
+    setTimeout(()=>toast.remove(), 300);
+  }, duration);
+}
+
+// ============================================================
+// SECURITY PROTECTIONS
+// ============================================================
+
+// Disable right-click context menu
+document.addEventListener('contextmenu', e => e.preventDefault());
+
+// Disable common keyboard shortcuts untuk developer tools
+document.addEventListener('keydown', e => {
+  // F12
+  if(e.key === 'F12') { e.preventDefault(); return false; }
+  // Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C (DevTools)
+  if(e.ctrlKey && e.shiftKey && ['I','i','J','j','C','c'].includes(e.key)) {
+    e.preventDefault(); return false;
+  }
+  // Ctrl+U (View Source)
+  if(e.ctrlKey && ['U','u'].includes(e.key)) {
+    e.preventDefault(); return false;
+  }
+  // Ctrl+S (Save Page)
+  if(e.ctrlKey && ['S','s'].includes(e.key)) {
+    e.preventDefault(); return false;
+  }
+});
+
+// Deteksi DevTools terbuka (metode ukuran window)
+(function detectDevTools(){
+  const threshold = 160;
+  let devOpen = false;
+  setInterval(()=>{
+    const widthDiff  = window.outerWidth  - window.innerWidth  > threshold;
+    const heightDiff = window.outerHeight - window.innerHeight > threshold;
+    if((widthDiff || heightDiff) && !devOpen){
+      devOpen = true;
+      // Logout otomatis jika DevTools dibuka
+      if(token){
+        addLog('Security','Sesi dihentikan — aktivitas mencurigakan','error');
+        setTimeout(()=>doLogout(), 1000);
+      }
+    } else if(!widthDiff && !heightDiff){
+      devOpen = false;
+    }
+  }, 1000);
+})();
+
+// Sembunyikan token dari console
+Object.defineProperty(window, 'token', {
+  get: function(){ return '***'; },
+  configurable: false
+});
+
+// Disable console methods di production
+(function disableConsole(){
+  const env = localStorage.getItem('esp32_dev_mode');
+  if(env === 'true') return; // set 'esp32_dev_mode'='true' di localStorage untuk dev
+  const noop = ()=>{};
+  ['log','warn','error','info','debug','table','dir'].forEach(m=>{
+    console[m] = noop;
+  });
+})();
+
+// Anti copy-paste token — clear clipboard setelah beberapa saat
+document.addEventListener('copy', ()=>{
+  setTimeout(()=>{
+    try{ navigator.clipboard.writeText(''); }catch(e){}
+  }, 3000);
+});
+
+// ============================================================
+// THEME & LANGUAGE
+// ============================================================
+const i18n = {
+  id: {
+    nav_logs:'Logs', nav_alerts:'Alert & Jadwal', nav_users:'Kelola User',
+    nav_settings:'Settings', nav_section_admin:'Admin', nav_section_system:'Sistem',
+    alert_title:'Alert & Jadwal', alert_sub:'Notifikasi suhu, jadwal relay otomatis, geofencing GPS',
+    alert_sensor:'Batas Sensor', alert_schedule:'Jadwal Relay Otomatis',
+    alert_telegram:'Notifikasi Telegram', telegram_hint:'Isi TELEGRAM_BOT_TOKEN dan TELEGRAM_CHAT_ID di Railway Variables.',
+    telegram_test:'Kirim Pesan Tes', settings_server:'Ganti Server URL', settings_save:'Simpan & Reconnect',
+    settings_password:'Ganti Password', settings_change_pass:'Ubah Password',
+    settings_storage:'Penyimpanan Data', settings_storage_info:'Info Storage',
+    settings_check:'Cek', settings_manual_save:'Simpan Sekarang',
+  },
+  en: {
+    nav_logs:'Logs', nav_alerts:'Alert & Schedule', nav_users:'Manage Users',
+    nav_settings:'Settings', nav_section_admin:'Admin', nav_section_system:'System',
+    alert_title:'Alert & Schedule', alert_sub:'Temperature alerts, relay schedules, GPS geofencing',
+    alert_sensor:'Sensor Limits', alert_schedule:'Auto Relay Schedule',
+    alert_telegram:'Telegram Notification', telegram_hint:'Fill TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID in Railway Variables.',
+    telegram_test:'Send Test Message', settings_server:'Change Server URL', settings_save:'Save & Reconnect',
+    settings_password:'Change Password', settings_change_pass:'Update Password',
+    settings_storage:'Data Storage', settings_storage_info:'Storage Info',
+    settings_check:'Check', settings_manual_save:'Save Now',
+  }
+};
+let currentLang = localStorage.getItem('esp32_lang') || 'id';
+
+function applyI18n(){
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const key=el.dataset.i18n;
+    if(i18n[currentLang]&&i18n[currentLang][key]) el.textContent=i18n[currentLang][key];
+  });
+  document.getElementById('lang-btn').textContent=currentLang.toUpperCase();
+}
+
+function toggleLang(){
+  currentLang = currentLang==='id' ? 'en' : 'id';
+  localStorage.setItem('esp32_lang', currentLang);
+  applyI18n();
+}
+
+function toggleTheme(){
+  const light = document.body.classList.toggle('light');
+  localStorage.setItem('esp32_theme', light?'light':'dark');
+  document.getElementById('theme-btn').innerHTML = light
+    ? '<i class="ti ti-sun" style="font-size:15px"></i>'
+    : '<i class="ti ti-moon" style="font-size:15px"></i>';
+}
+
+function applyTheme(){
+  const saved = localStorage.getItem('esp32_theme');
+  if(saved==='light'){
+    document.body.classList.add('light');
+    document.getElementById('theme-btn').innerHTML='<i class="ti ti-sun" style="font-size:15px"></i>';
+  }
+}
+
+// ============================================================
+// ALERTS & SCHEDULES
+// ============================================================
+let alertConfigs={}, schedulesData=[];
+
+async function loadAlertPage(){
+  if(!isAdmin()){
+    document.getElementById('alert-actions').style.display='none';
+    document.getElementById('notice-alerts').innerHTML='<div class="notice"><i class="ti ti-info-circle"></i>Hanya admin yang bisa mengatur alert.</div>';
+  } else {
+    document.getElementById('alert-actions').style.display='flex';
+    document.getElementById('notice-alerts').innerHTML='';
+  }
+  await renderAlertList();
+  await renderScheduleList();
+}
+
+async function renderAlertList(){
+  const el=document.getElementById('alert-list');
+  const devList=Object.values(devices).filter(d=>d.temp!=null);
+  if(!devList.length){ el.innerHTML='<div style="color:var(--text3);font-size:13px">Tidak ada sensor device</div>'; return; }
+  let html='';
+  for(const d of devList){
+    let cfg={};
+    try{ cfg=await apiFetch('/api/devices/'+d.device_id+'/alert')||{}; }catch(e){}
+    alertConfigs[d.device_id]=cfg;
+    html+=`<div class="card" style="margin-bottom:.6rem">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem">
+        <div style="font-size:13px;font-weight:600">${d.name||d.device_id}</div>
+        <div style="display:flex;gap:6px">
+          ${isAdmin()?`<button class="sec-btn" onclick="openAlertModal('${d.device_id}')"><i class="ti ti-pencil" style="font-size:11px"></i> Edit</button>
+          <button class="del-btn" onclick="deleteAlert('${d.device_id}')"><i class="ti ti-trash" style="font-size:11px"></i></button>`:''}
+        </div>
+      </div>
+      ${Object.keys(cfg).length && cfg.enabled!==false ? `
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;font-size:12px">
+          ${cfg.temp_max!=null?`<div style="background:var(--bg3);border-radius:6px;padding:6px 10px"><span style="color:var(--text3)">Suhu max</span><span style="float:right;color:var(--accent3)">${cfg.temp_max}°C</span></div>`:''}
+          ${cfg.temp_min!=null?`<div style="background:var(--bg3);border-radius:6px;padding:6px 10px"><span style="color:var(--text3)">Suhu min</span><span style="float:right;color:var(--accent)">  ${cfg.temp_min}°C</span></div>`:''}
+          ${cfg.humid_max!=null?`<div style="background:var(--bg3);border-radius:6px;padding:6px 10px"><span style="color:var(--text3)">Humid max</span><span style="float:right;color:var(--accent3)">${cfg.humid_max}%</span></div>`:''}
+          ${cfg.humid_min!=null?`<div style="background:var(--bg3);border-radius:6px;padding:6px 10px"><span style="color:var(--text3)">Humid min</span><span style="float:right;color:var(--accent)">  ${cfg.humid_min}%</span></div>`:''}
+        </div>` : '<div style="font-size:12px;color:var(--text3)">Belum dikonfigurasi</div>'}
+    </div>`;
+  }
+  el.innerHTML=html;
+}
+
+async function renderScheduleList(){
+  const el=document.getElementById('schedule-list');
+  try{
+    schedulesData=await apiFetch('/api/schedules')||[];
+  }catch(e){ schedulesData=[]; }
+  if(!schedulesData.length){ el.innerHTML='<div style="color:var(--text3);font-size:13px">Belum ada jadwal</div>'; return; }
+  const days=['Sen','Sel','Rab','Kam','Jum','Sab','Min'];
+  el.innerHTML=schedulesData.map(s=>`
+    <div class="card" style="margin-bottom:.6rem">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:13px;font-weight:600">${s.label||s.device_id+' GPIO'+s.pin}</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px">
+            <span style="font-family:var(--mono)">${String(s.cron_hour).padStart(2,'0')}:${String(s.cron_min).padStart(2,'0')}</span>
+            — <span style="color:${s.action==='on'?'var(--accent2)':'var(--accent3)'}">${s.action.toUpperCase()}</span>
+            GPIO${s.pin} · ${(s.days||[0,1,2,3,4,5,6]).map(d=>days[d]).join(', ')}
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <div class="toggle ${s.enabled?'on':''}" onclick="toggleSchedule('${s.id}',this)" ${!isAdmin()?'style="pointer-events:none;opacity:.4"':''}></div>
+          ${isAdmin()?`<button class="del-btn" onclick="deleteSchedule('${s.id}')"><i class="ti ti-trash" style="font-size:11px"></i></button>`:''}
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+// Alert modal
+let currentAlertDevice='';
+function openAlertModal(devId){
+  currentAlertDevice=devId||Object.keys(devices)[0]||'';
+  const cfg=alertConfigs[currentAlertDevice]||{};
+  // Build simple modal
+  const modal=document.createElement('div');
+  modal.className='modal-bg open';
+  modal.id='modal-alert-dyn';
+  modal.innerHTML=`<div class="modal">
+    <div class="modal-title"><span>Alert Sensor — ${devices[currentAlertDevice]?.name||currentAlertDevice}</span><button class="modal-close" onclick="document.getElementById('modal-alert-dyn').remove()">&times;</button></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div class="form-row"><label class="form-label">Suhu Max (°C)</label><input type="number" class="form-input" id="al-tmax" value="${cfg.temp_max||''}" placeholder="mis. 35"></div>
+      <div class="form-row"><label class="form-label">Suhu Min (°C)</label><input type="number" class="form-input" id="al-tmin" value="${cfg.temp_min||''}" placeholder="mis. 15"></div>
+      <div class="form-row"><label class="form-label">Humid Max (%)</label><input type="number" class="form-input" id="al-hmax" value="${cfg.humid_max||''}" placeholder="mis. 80"></div>
+      <div class="form-row"><label class="form-label">Humid Min (%)</label><input type="number" class="form-input" id="al-hmin" value="${cfg.humid_min||''}" placeholder="mis. 30"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="document.getElementById('modal-alert-dyn').remove()">Batal</button>
+      <button class="btn-primary" onclick="saveAlert()">Simpan Alert</button>
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+}
+
+async function saveAlert(){
+  const cfg={
+    temp_max:  parseFloat(document.getElementById('al-tmax').value)||null,
+    temp_min:  parseFloat(document.getElementById('al-tmin').value)||null,
+    humid_max: parseFloat(document.getElementById('al-hmax').value)||null,
+    humid_min: parseFloat(document.getElementById('al-hmin').value)||null,
+    enabled:   true,
+  };
+  try{
+    await apiFetch('/api/devices/'+currentAlertDevice+'/alert',{method:'PUT',body:cfg});
+    alertConfigs[currentAlertDevice]=cfg;
+    addLog(currentAlertDevice,'Alert config disimpan','ok');
+    document.getElementById('modal-alert-dyn')?.remove();
+    renderAlertList();
+  }catch(e){addLog('System','Error: '+e.message,'error');}
+}
+
+async function deleteAlert(devId){
+  if(!confirm('Hapus alert untuk device ini?')) return;
+  try{ await apiFetch('/api/devices/'+devId+'/alert',{method:'DELETE'}); renderAlertList(); }
+  catch(e){addLog('System','Error: '+e.message,'error');}
+}
+
+// Schedule modal
+function openScheduleModal(){
+  const devOptions=Object.values(devices).map(d=>`<option value="${d.device_id}">${d.name||d.device_id}</option>`).join('');
+  const modal=document.createElement('div');
+  modal.className='modal-bg open';
+  modal.id='modal-sch-dyn';
+  modal.innerHTML=`<div class="modal">
+    <div class="modal-title"><span>Tambah Jadwal Relay</span><button class="modal-close" onclick="document.getElementById('modal-sch-dyn').remove()">&times;</button></div>
+    <div class="form-row"><label class="form-label">Device</label><select class="form-select" id="sch-dev">${devOptions}</select></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div class="form-row"><label class="form-label">GPIO Pin</label><input type="number" class="form-input" id="sch-pin" value="4" min="0" max="39"></div>
+      <div class="form-row"><label class="form-label">Aksi</label><select class="form-select" id="sch-action"><option value="on">ON</option><option value="off">OFF</option></select></div>
+      <div class="form-row"><label class="form-label">Jam (0-23)</label><input type="number" class="form-input" id="sch-hour" value="${new Date().getHours()}" min="0" max="23"></div>
+      <div class="form-row"><label class="form-label">Menit (0-59)</label><input type="number" class="form-input" id="sch-min" value="0" min="0" max="59"></div>
+    </div>
+    <div class="form-row"><label class="form-label">Label (opsional)</label><input type="text" class="form-input" id="sch-label" placeholder="mis. Lampu pagi"></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="document.getElementById('modal-sch-dyn').remove()">Batal</button>
+      <button class="btn-primary" onclick="saveSchedule()">Tambah Jadwal</button>
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+}
+
+async function saveSchedule(){
+  const body={
+    device_id: document.getElementById('sch-dev').value,
+    pin:       parseInt(document.getElementById('sch-pin').value),
+    action:    document.getElementById('sch-action').value,
+    cron_hour: parseInt(document.getElementById('sch-hour').value),
+    cron_min:  parseInt(document.getElementById('sch-min').value),
+    label:     document.getElementById('sch-label').value.trim(),
+    enabled:   true, days:[0,1,2,3,4,5,6],
+  };
+  try{
+    await apiFetch('/api/schedules',{method:'POST',body});
+    addLog('System','Jadwal ditambahkan','ok');
+    document.getElementById('modal-sch-dyn')?.remove();
+    renderScheduleList();
+  }catch(e){addLog('System','Error: '+e.message,'error');}
+}
+
+async function toggleSchedule(id, el){
+  const enabled=!el.classList.contains('on');
+  const sch=schedulesData.find(s=>s.id===id);
+  if(!sch) return;
+  try{
+    await apiFetch('/api/schedules/'+id,{method:'PUT',body:{...sch,enabled}});
+    el.classList.toggle('on',enabled);
+    addLog('System','Jadwal '+(enabled?'aktif':'nonaktif'),'ok');
+  }catch(e){addLog('System','Error: '+e.message,'error');}
+}
+
+async function deleteSchedule(id){
+  if(!confirm('Hapus jadwal ini?')) return;
+  try{ await apiFetch('/api/schedules/'+id,{method:'DELETE'}); renderScheduleList(); }
+  catch(e){addLog('System','Error: '+e.message,'error');}
+}
+
+async function testTelegram(){
+  try{ await apiFetch('/api/telegram/test',{method:'POST'}); addLog('System','Pesan Telegram terkirim','ok'); }
+  catch(e){addLog('System','Telegram error: '+e.message,'error');}
+}
+
+// ============================================================
+// GEOFENCE
+// ============================================================
+let geofenceCircle=null;
+
+async function loadGeofenceInfo(){
+  if(!currentGPSDevice) return;
+  try{
+    const gf=await apiFetch('/api/devices/'+currentGPSDevice+'/geofence');
+    const el=document.getElementById('geofence-info');
+    if(gf && gf.lat){
+      el.innerHTML=`<b>${gf.name||'Area'}</b> · Radius: ${gf.radius_m}m<br>
+        Center: ${parseFloat(gf.lat).toFixed(5)}, ${parseFloat(gf.lng).toFixed(5)}<br>
+        Alert: ${gf.alert_on_exit?'Saat keluar area':'Saat masuk area'}`;
+      // Gambar lingkaran di peta
+      if(geofenceCircle) geofenceCircle.remove();
+      geofenceCircle=L.circle([parseFloat(gf.lat),parseFloat(gf.lng)],{
+        radius:gf.radius_m,color:'#39d353',fillColor:'rgba(57,211,83,.1)',weight:2
+      }).addTo(gpsMap);
+    } else {
+      el.textContent='Belum ada geofence untuk tracker ini.';
+      if(geofenceCircle){ geofenceCircle.remove(); geofenceCircle=null; }
+    }
+  }catch(e){ document.getElementById('geofence-info').textContent='Belum ada geofence.'; }
+}
+
+function setupGeofence(){
+  if(!currentGPSDevice){ addLog('GPS','Pilih tracker dulu','warn'); return; }
+  if(!isAdmin()){ addLog('System','Hanya admin','error'); return; }
+  const d=devices[currentGPSDevice];
+  const lat=d?.lat||'-2.5'; const lng=d?.lng||'118.0';
+  const modal=document.createElement('div');
+  modal.className='modal-bg open'; modal.id='modal-geo-dyn';
+  modal.innerHTML=`<div class="modal">
+    <div class="modal-title"><span>Set Geofence — ${d?.name||currentGPSDevice}</span>
+      <button class="modal-close" onclick="document.getElementById('modal-geo-dyn').remove()">&times;</button></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div class="form-row"><label class="form-label">Latitude</label><input type="number" class="form-input" id="gf-lat" value="${lat}" step="0.000001"></div>
+      <div class="form-row"><label class="form-label">Longitude</label><input type="number" class="form-input" id="gf-lng" value="${lng}" step="0.000001"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div class="form-row"><label class="form-label">Radius (meter)</label><input type="number" class="form-input" id="gf-radius" value="100" min="10"></div>
+      <div class="form-row"><label class="form-label">Nama Area</label><input type="text" class="form-input" id="gf-name" placeholder="Kantor"></div>
+    </div>
+    <div class="form-row"><label class="form-label">Alert saat</label>
+      <select class="form-select" id="gf-alert">
+        <option value="exit">Keluar area</option>
+        <option value="enter">Masuk area</option>
+      </select></div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:.5rem">💡 Klik lokasi di peta untuk set koordinat secara langsung</div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="document.getElementById('modal-geo-dyn').remove()">Batal</button>
+      <button class="btn-primary" onclick="saveGeofence()">Simpan Geofence</button>
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+  // Klik peta untuk set koordinat
+  gpsMap.once('click', e=>{
+    document.getElementById('gf-lat').value=e.latlng.lat.toFixed(6);
+    document.getElementById('gf-lng').value=e.latlng.lng.toFixed(6);
+  });
+}
+
+async function saveGeofence(){
+  const body={
+    lat:         parseFloat(document.getElementById('gf-lat').value),
+    lng:         parseFloat(document.getElementById('gf-lng').value),
+    radius_m:    parseFloat(document.getElementById('gf-radius').value)||100,
+    name:        document.getElementById('gf-name').value||'Area',
+    alert_on_exit: document.getElementById('gf-alert').value==='exit',
+  };
+  try{
+    await apiFetch('/api/devices/'+currentGPSDevice+'/geofence',{method:'PUT',body});
+    document.getElementById('modal-geo-dyn')?.remove();
+    addLog(currentGPSDevice,'Geofence disimpan','ok');
+    showToast('✅ Geofence disimpan','ok');
+    loadGeofenceInfo();
+  }catch(e){addLog('System','Error: '+e.message,'error');}
+}
+
+async function deleteGeofence(){
+  if(!confirm('Hapus geofence?')) return;
+  try{
+    await apiFetch('/api/devices/'+currentGPSDevice+'/geofence',{method:'DELETE'});
+    addLog(currentGPSDevice,'Geofence dihapus','warn');
+    if(geofenceCircle){ geofenceCircle.remove(); geofenceCircle=null; }
+    document.getElementById('geofence-info').textContent='Belum ada geofence.';
+  }catch(e){addLog('System','Error: '+e.message,'error');}
+}
+
+// ============================================================
+// CHANGE PASSWORD
+// ============================================================
+async function changePassword(){
+  const oldP=document.getElementById('old-pass').value;
+  const newP=document.getElementById('new-pass').value;
+  const errEl=document.getElementById('pass-err');
+  errEl.textContent='';
+  if(!oldP||!newP){errEl.textContent='Isi semua field';return;}
+  if(newP.length<6){errEl.textContent='Password minimal 6 karakter';return;}
+  try{
+    await apiFetch('/api/change-password',{method:'POST',body:{old_password:oldP,new_password:newP}});
+    document.getElementById('old-pass').value='';
+    document.getElementById('new-pass').value='';
+    addLog('System','Password berhasil diubah','ok');
+    errEl.style.color='var(--accent2)';
+    errEl.textContent='✓ Password berhasil diubah';
+  }catch(e){errEl.style.color='var(--accent3)';errEl.textContent='⚠ '+e.message;}
+}
+
+// ============================================================
+// EXPORT CSV
+// ============================================================
+async function exportCSV(devId){
+  try{
+    const name=devices[devId]?.name||devId;
+    addLog(devId,'Mengunduh CSV...','info');
+    const res=await fetch(BASE_URL+'/api/devices/'+devId+'/history/export',{
+      headers:{'Authorization':'Bearer '+token}
+    });
+    if(!res.ok) throw new Error('Export gagal');
+    const blob=await res.blob();
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url; a.download=name+'_sensor.csv';
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(url);
+    addLog(devId,'CSV berhasil diunduh','ok');
+  }catch(e){addLog('System','Export error: '+e.message,'error');}
+}
+
+// ============================================================
+// STORAGE INFO
+// ============================================================
+async function loadStorageInfo(){
+  try{
+    const info=await apiFetch('/api/storage');
+    const el=document.getElementById('storage-info');
+    if(info.exists){
+      el.innerHTML=`File: ${info.file}<br>Ukuran: ${info.size_kb} KB<br>Device: ${info.devices} | Pin: ${info.pin_configs} | GPS: ${info.gps_locations}<br>Jadwal: ${info.schedules||0}<br>Terakhir: ${info.modified?.slice(0,19)||'—'}`;
+    } else {
+      el.textContent='File storage belum ada';
+    }
+  }catch(e){addLog('System','Error: '+e.message,'error');}
+}
+
+async function manualSave(){
+  try{
+    await apiFetch('/api/storage/save',{method:'POST'});
+    addLog('System','Data disimpan ke server','ok');
+  }catch(e){addLog('System','Error: '+e.message,'error');}
+}
+
+// ============================================================
+// HANDLE ALERT WS EVENTS
+// ============================================================
+// (ditambah ke ws.onmessage handler yang sudah ada)
+
 // ---- AUTO LOGIN ----
 window.addEventListener('load',()=>{
-  const t=localStorage.getItem('esp32_token'),u=localStorage.getItem('esp32_user'),r=localStorage.getItem('esp32_role');
-  if(t&&u){token=t;username=u;userRole=r||'viewer';enterApp();}
+  const t=localStorage.getItem('esp32_token');
+  const u=localStorage.getItem('esp32_user');
+  const r=localStorage.getItem('esp32_role');
+  const exp=localStorage.getItem('esp32_expires');
+  // Cek apakah token sudah expired di sisi client
+  if(t&&u){
+    if(exp && Date.now() > parseInt(exp)){
+      // Token expired — bersihkan dan minta login ulang
+      _clearSession();
+      localStorage.removeItem('esp32_expires');
+      return;
+    }
+    token=t; username=u; userRole=r||'viewer';
+    enterApp();
+  }
 });
 </script>
 </body>
