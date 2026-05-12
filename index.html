@@ -127,7 +127,21 @@ body.light .topbar,body.light .sidebar{box-shadow:0 1px 4px rgba(0,0,0,.1)}
 .chart-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1rem;margin-bottom:1rem}
 .chart-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem}
 .chart-title{font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em}
-canvas.chart{width:100%!important;height:160px!important}
+canvas.chart{width:100%!important;height:260px!important}
+
+/* SIMULATOR */
+.sim-panel{background:linear-gradient(135deg,rgba(88,166,255,.10),rgba(63,185,80,.07));border:1px solid var(--border);border-radius:12px;padding:1rem;margin-bottom:1rem}
+.sim-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:.9rem}
+.sim-title{font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px}
+.sim-sub{font-size:12px;color:var(--text2);margin-top:3px}
+.sim-status{font-size:10px;font-weight:700;font-family:var(--mono);padding:3px 8px;border-radius:99px;background:rgba(72,79,88,.35);color:var(--text2);white-space:nowrap}
+.sim-status.on{background:rgba(63,185,80,.15);color:var(--accent2)}
+.sim-grid{display:grid;grid-template-columns:1.1fr repeat(3,.7fr) auto auto;gap:8px;align-items:end}
+.sim-reading-grid{display:grid;grid-template-columns:repeat(3,minmax(90px,1fr));gap:8px;margin-top:.9rem}
+.sim-reading{background:var(--bg2);border:1px solid var(--border);border-radius:9px;padding:.7rem;text-align:center}
+.sim-reading .val{font-size:20px;font-weight:800;font-family:var(--mono)}
+.sim-reading .key{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
+@media(max-width:800px){.sim-grid{grid-template-columns:1fr 1fr}.sim-grid .btn-primary,.sim-grid .btn-cancel{grid-column:auto}.sim-head{flex-direction:column}.sim-reading-grid{grid-template-columns:1fr 1fr 1fr}}
 
 /* CONTROL */
 .ctrl-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1.1rem;margin-bottom:.8rem}
@@ -279,7 +293,7 @@ canvas.chart{width:100%!important;height:160px!important}
   <div class="login-box">
     <div class="login-logo">
       <div class="icon"><i class="ti ti-cpu"></i></div>
-      <div class="text"><div class="name">ESP32 <span style="color:var(--accent)">Hub</span></div><div class="sub">IoT Control Center v3</div></div>
+      <div class="text"><div class="name">ESP32 <span style="color:var(--accent)">Hub</span></div><div class="sub">IoT Control Center v7</div></div>
     </div>
     <div class="login-field"><label>Username</label><input type="text" id="inp-user" placeholder="admin" autocomplete="username"></div>
     <div class="login-field"><label>Password</label><input type="password" id="inp-pass" placeholder="••••••••" autocomplete="current-password"></div>
@@ -340,7 +354,31 @@ canvas.chart{width:100%!important;height:160px!important}
         <div class="stat-card c-purple"><div class="stat-label">Avg Suhu</div><div class="stat-val purple" id="s-temp">—</div><div class="stat-sub">semua sensor</div></div>
         <div class="stat-card c-cyan"><div class="stat-label">GPS Tracker</div><div class="stat-val cyan" id="s-gps">—</div><div class="stat-sub">aktif</div></div>
       </div>
-      <div class="sec-title"><span>Grafik Suhu Real-time</span>
+
+      <div class="sim-panel">
+        <div class="sim-head">
+          <div>
+            <div class="sim-title"><i class="ti ti-wave-sine" style="color:var(--accent)"></i> Simulasi Suhu & Humidity</div>
+            <div class="sim-sub">Tes grafik dashboard tanpa ESP fisik. Data simulator dikirim via WebSocket seperti sensor asli.</div>
+          </div>
+          <span class="sim-status" id="sim-status">SIM OFF</span>
+        </div>
+        <div class="sim-grid">
+          <div><label class="form-label">Device ID Simulasi</label><input class="form-input" id="sim-device-id" value="sim-sensor-01"></div>
+          <div><label class="form-label">Suhu Base</label><input type="number" class="form-input" id="sim-temp-base" value="29" step="0.1"></div>
+          <div><label class="form-label">Humid Base</label><input type="number" class="form-input" id="sim-humid-base" value="62" step="0.1"></div>
+          <div><label class="form-label">Interval</label><input type="number" class="form-input" id="sim-interval" value="2" min="1" max="60" step="1"></div>
+          <button class="btn-primary" id="btn-sim-start" onclick="startSimulator()" style="padding:9px 14px;white-space:nowrap"><i class="ti ti-player-play"></i> Mulai</button>
+          <button class="btn-cancel" id="btn-sim-stop" onclick="stopSimulator()" style="padding:9px 14px;white-space:nowrap"><i class="ti ti-player-stop"></i> Stop</button>
+        </div>
+        <div class="sim-reading-grid">
+          <div class="sim-reading"><div class="val" id="sim-temp-val">—</div><div class="key">Suhu °C</div></div>
+          <div class="sim-reading"><div class="val" id="sim-humid-val">—</div><div class="key">Humidity %</div></div>
+          <div class="sim-reading"><div class="val" id="sim-rssi-val">—</div><div class="key">RSSI dBm</div></div>
+        </div>
+      </div>
+
+      <div class="sec-title"><span>Grafik Suhu & Humidity Real-time</span>
         <select class="tracker-select" id="chart-device-select" onchange="switchChartDevice(this.value)" style="font-size:11px;padding:3px 8px">
           <option value="">Pilih device...</option>
         </select>
@@ -396,15 +434,33 @@ canvas.chart{width:100%!important;height:160px!important}
         <div class="gps-info-card"><div class="gps-info-val" id="gps-update">—</div><div class="gps-info-key">Last Update</div></div>
       </div>
       <div id="gps-map"></div>
-      <div style="margin-top:1rem">
+      <div style="margin-top:1rem" id="geofence-panel">
         <div class="sec-title" style="margin-bottom:.6rem">
-          <span>Geofence</span>
-          <div style="display:flex;gap:6px">
-            <button class="sec-btn" id="geofence-btn" onclick="setupGeofence()"><i class="ti ti-circle-dashed" style="font-size:12px"></i> Set Area</button>
-            <button class="sec-btn" onclick="deleteGeofence()" style="color:var(--accent3)"><i class="ti ti-trash" style="font-size:12px"></i></button>
+          <span>Geofence / Setting Area</span>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="sec-btn" id="geofence-btn" onclick="setupGeofence()"><i class="ti ti-circle-dashed" style="font-size:12px"></i> Atur Area</button>
+            <button class="sec-btn" onclick="deleteGeofence()" style="color:var(--accent3)"><i class="ti ti-trash" style="font-size:12px"></i> Hapus</button>
           </div>
         </div>
-        <div id="geofence-info" class="card" style="font-size:12px;color:var(--text2);margin-bottom:1rem">Belum ada geofence untuk tracker ini.</div>
+        <div id="geofence-info" class="card" style="font-size:12px;color:var(--text2);margin-bottom:.7rem">Pilih tracker GPS terlebih dahulu, lalu klik Atur Area.</div>
+
+        <div id="geofence-editor" class="card" style="display:none;margin-bottom:1rem">
+          <div class="notice info" style="margin-bottom:.8rem"><i class="ti ti-info-circle"></i><span id="gf-help">Klik “Pilih Titik di Peta”, lalu klik lokasi pusat area pada peta. Anda juga bisa isi koordinat manual.</span></div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px">
+            <div class="form-row"><label class="form-label">Nama Area</label><input type="text" class="form-input" id="gf-name" placeholder="Rumah / Kantor"></div>
+            <div class="form-row"><label class="form-label">Radius Meter</label><input type="number" class="form-input" id="gf-radius" value="100" min="10" max="10000"></div>
+            <div class="form-row"><label class="form-label">Latitude</label><input type="number" class="form-input" id="gf-lat" placeholder="-7.257472" step="0.000001"></div>
+            <div class="form-row"><label class="form-label">Longitude</label><input type="number" class="form-input" id="gf-lng" placeholder="112.752090" step="0.000001"></div>
+            <div class="form-row"><label class="form-label">Alert Saat</label><select class="form-select" id="gf-alert"><option value="exit">Keluar area</option><option value="enter">Masuk area</option></select></div>
+          </div>
+          <div id="gf-err" style="color:var(--accent3);font-size:12px;min-height:16px;margin-bottom:.5rem"></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="sec-btn" id="gf-pick-btn" onclick="pickGeofenceOnMap()"><i class="ti ti-map-pin-plus" style="font-size:12px"></i> Pilih Titik di Peta</button>
+            <button class="sec-btn" onclick="useTrackerPositionForGeofence()"><i class="ti ti-current-location" style="font-size:12px"></i> Pakai Posisi Tracker</button>
+            <button class="btn-primary" style="flex:0 0 auto;padding:8px 14px" onclick="saveGeofence()">Simpan Area</button>
+            <button class="btn-cancel" onclick="cancelGeofenceEdit()">Batal</button>
+          </div>
+        </div>
       </div>
       <div>
         <div class="sec-title"><span>Riwayat Posisi</span><button class="sec-btn" onclick="loadGPSHistory()"><i class="ti ti-refresh" style="font-size:12px"></i>Refresh</button></div>
@@ -432,13 +488,22 @@ canvas.chart{width:100%!important;height:160px!important}
       <div class="sec-title" style="margin-top:1rem"><span data-i18n="alert_schedule">Jadwal Relay Otomatis</span></div>
       <div id="schedule-list"></div>
 
-      <!-- Telegram Config -->
-      <div class="sec-title" style="margin-top:1rem"><span data-i18n="alert_telegram">Notifikasi Telegram</span></div>
+      <!-- Notification Config -->
+      <div class="sec-title" style="margin-top:1rem"><span data-i18n="alert_telegram">Notifikasi Telegram & Instagram</span></div>
       <div class="card">
-        <div style="font-size:12px;color:var(--text2);margin-bottom:.8rem" data-i18n="telegram_hint">Isi TELEGRAM_BOT_TOKEN dan TELEGRAM_CHAT_ID di Railway Variables.</div>
-        <button class="sec-btn" onclick="testTelegram()" style="width:100%;justify-content:center">
-          <i class="ti ti-brand-telegram" style="font-size:13px;color:#29b6f6"></i> <span data-i18n="telegram_test">Kirim Pesan Tes</span>
-        </button>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:.8rem" data-i18n="telegram_hint">Telegram: isi TELEGRAM_BOT_TOKEN dan TELEGRAM_CHAT_ID. Instagram: isi INSTAGRAM_ACCESS_TOKEN, INSTAGRAM_RECIPIENT_ID, dan opsional INSTAGRAM_ACCOUNT_ID di Railway Variables.</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px">
+          <button class="sec-btn" onclick="testTelegram()" style="justify-content:center">
+            <i class="ti ti-brand-telegram" style="font-size:13px;color:#29b6f6"></i> <span>Test Telegram</span>
+          </button>
+          <button class="sec-btn" onclick="testInstagram()" style="justify-content:center">
+            <i class="ti ti-brand-instagram" style="font-size:13px;color:#e1306c"></i> <span>Test Instagram</span>
+          </button>
+          <button class="sec-btn" onclick="testAllNotifications()" style="justify-content:center">
+            <i class="ti ti-bell-ringing" style="font-size:13px;color:var(--warn)"></i> <span>Test Semua</span>
+          </button>
+        </div>
+        <div id="notify-test-result" style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:.6rem;white-space:pre-wrap"></div>
       </div>
     </div>
 
@@ -464,28 +529,6 @@ canvas.chart{width:100%!important;height:160px!important}
       <div class="settings-card"><div style="overflow-x:auto">
         <table class="user-table"><thead><tr><th>Username</th><th>Role</th><th>Sesi</th><th></th></tr></thead><tbody id="user-tbody"></tbody></table>
       </div></div>
-    </div>
-
-    <!-- ALERTS -->
-    <div class="page" id="page-alerts">
-      <div class="page-header">
-        <div class="page-header-text"><h1>Alert & Notifikasi</h1><p>Atur batas suhu dan notifikasi Telegram</p></div>
-        <div class="page-actions">
-          <select class="tracker-select" id="alert-device-sel" onchange="loadAlerts(this.value)">
-            <option value="">Pilih device...</option>
-          </select>
-          <button class="sec-btn" id="btn-add-alert" onclick="openAlertModal()" style="display:none"><i class="ti ti-plus" style="font-size:12px"></i>Tambah Alert</button>
-        </div>
-      </div>
-      <div class="notice info" id="telegram-status" style="margin-bottom:1rem">
-        <i class="ti ti-brand-telegram"></i>
-        <span id="tg-status-text">Cek status Telegram...</span>
-        <button class="sec-btn" style="margin-left:auto" onclick="testTelegram()"><i class="ti ti-send" style="font-size:11px"></i> Test</button>
-      </div>
-      <div class="settings-card" id="alert-list-wrap">
-        <h3>Alert Rules</h3>
-        <div id="alert-list"><div style="color:var(--text3);font-size:12px">Pilih device untuk melihat alert rules</div></div>
-      </div>
     </div>
 
     <!-- SCHEDULE -->
@@ -549,14 +592,6 @@ canvas.chart{width:100%!important;height:160px!important}
             <option value="en">🇬🇧 English</option>
           </select>
         </div>
-      </div>
-      <div class="settings-card">
-        <h3>Ganti Password</h3>
-        <div class="form-row"><label class="form-label">Password Lama</label><input type="password" class="form-input" id="pass-old" placeholder="••••••••"></div>
-        <div class="form-row"><label class="form-label">Password Baru</label><input type="password" class="form-input" id="pass-new" placeholder="min. 6 karakter"></div>
-        <div class="form-row"><label class="form-label">Konfirmasi Password Baru</label><input type="password" class="form-input" id="pass-confirm" placeholder="ulangi password baru"></div>
-        <div id="pass-err" style="color:var(--accent3);font-size:12px;min-height:16px;margin-bottom:.5rem"></div>
-        <button class="btn-primary" style="width:100%;padding:8px" onclick="changePassword()">Simpan Password</button>
       </div>
       <div class="settings-card">
         <h3 data-i18n="settings_server">Ganti Server URL</h3>
@@ -757,6 +792,7 @@ let chartCtx=null, chartInstance=null, chartDeviceId=null;
 let gpsMap=null, gpsMarkers={}, gpsTrails={}, gpsTrailEnabled=true;
 let currentGPSDevice=null, currentPinDevice=null;
 let tempHistory={};
+let simulatorRunning=false, simulatorDeviceId='sim-sensor-01';
 
 const typeIcons  = {sensor:'ti-temperature',relay:'ti-bolt',servo:'ti-rotate',display:'ti-device-desktop',motor:'ti-engine',gps_tracker:'ti-map-pin',custom:'ti-puzzle'};
 const typeColors = {sensor:'#58a6ff',relay:'#d29922',servo:'#bc8cff',display:'#3fb950',motor:'#3fb950',gps_tracker:'#39d353',custom:'#8b949e'};
@@ -856,6 +892,7 @@ function enterApp() {
   initChart();
   initMap();
   startApp();
+  loadSimulatorStatus();
   addLog('System','Login: '+username+' ('+userRole+')','ok');
   // Restore halaman terakhir setelah data selesai dimuat
   setTimeout(restoreActivePage, 600);
@@ -891,6 +928,10 @@ function applyRoleUI() {
     const el=document.getElementById(n.id);
     if(el) el.innerHTML=n.show?`<div class="notice"><i class="ti ti-info-circle"></i>${n.msg}</div>`:'';
   });
+  const simStart=document.getElementById('btn-sim-start');
+  const simStop=document.getElementById('btn-sim-stop');
+  if(simStart) simStart.disabled=!isAdmin();
+  if(simStop) simStop.disabled=!isAdmin();
 }
 
 // ---- WEBSOCKET ----
@@ -934,6 +975,11 @@ function connectWS() {
             if(chartDeviceId===id && chartCtx) updateChart(id);
           }
           addLog(id,'T:'+d.temp+'C H:'+d.humidity+'%','info');
+          if(id===simulatorDeviceId || devices[id]?.simulated) updateSimulatorReadings(id,d);
+        }
+        if(msg.type==='status' && (d?.simulated || id===simulatorDeviceId)) {
+          updateSimulatorReadings(id,d);
+          setSimulatorStatus(d?.status!=='offline' && d?.online!==false);
         }
         if(msg.type==='gps'&&id===currentGPSDevice) updateGPSDisplay(id,d);
         if(msg.type==='status'&&d.status==='offline') addLog(id,'Device offline','warn');
@@ -951,6 +997,18 @@ function connectWS() {
       }
       if(msg.type==='scheduler'){
         addLog(msg.device_id,'⏰ Jadwal: GPIO'+msg.pin+' → '+(msg.state?'ON':'OFF'),'ok');
+      }
+      if(msg.type==='schedule_updated'||msg.type==='schedule_deleted'){
+        if(document.getElementById('page-alerts')?.classList.contains('active')) renderScheduleList();
+      }
+      if(msg.type==='geofence_updated' && msg.device_id===currentGPSDevice){
+        loadGeofenceInfo();
+        showToast('Area GPS diperbarui','ok');
+      }
+      if(msg.type==='geofence_deleted' && msg.device_id===currentGPSDevice){
+        if(geofenceCircle){ geofenceCircle.remove(); geofenceCircle=null; }
+        document.getElementById('geofence-info').textContent='Belum ada geofence untuk tracker ini. Klik Atur Area untuk membuat zona.';
+        cancelGeofenceEdit(false);
       }
       // Handle hapus device dari browser lain
       if(msg.type==='device_deleted'){
@@ -1044,6 +1102,16 @@ function updateDeviceSelects(){
   list.filter(d=>d.lat||d.device_type==='gps_tracker').forEach(d=>{
     gs.innerHTML+=`<option value="${d.device_id}" ${d.device_id===prevG?'selected':''}>${d.name||d.device_id}</option>`;
   });
+
+  // Export CSV select
+  const es=document.getElementById('export-device-sel');
+  if(es){
+    const prevE=es.value;
+    es.innerHTML='<option value="">Pilih device...</option>';
+    list.forEach(d=>{
+      es.innerHTML+=`<option value="${d.device_id}" ${d.device_id===prevE?'selected':''}>${d.name||d.device_id}</option>`;
+    });
+  }
 }
 
 // ---- CHART ----
@@ -1055,7 +1123,7 @@ function drawChart(labels,temps,humids=[]){
   if(chartInstance) chartInstance=null;
   const ctx=chartCtx;
   ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
-  const W=ctx.canvas.offsetWidth||600,H=160;
+  const W=ctx.canvas.offsetWidth||600,H=Math.max(220,ctx.canvas.offsetHeight||260);
   ctx.canvas.width=W;ctx.canvas.height=H;
   const pad={t:20,r:20,b:30,l:45};
   const iW=W-pad.l-pad.r,iH=H-pad.t-pad.b;
@@ -1126,12 +1194,88 @@ function switchChartDevice(id){
   else drawChart([],[]);
 }
 
+// ---- SENSOR SIMULATOR ----
+function setSimulatorStatus(on){
+  simulatorRunning=!!on;
+  const el=document.getElementById('sim-status');
+  if(el){
+    el.textContent=on?'SIM ON':'SIM OFF';
+    el.classList.toggle('on', on);
+  }
+  const start=document.getElementById('btn-sim-start');
+  const stop=document.getElementById('btn-sim-stop');
+  if(start) start.disabled=on || !isAdmin();
+  if(stop) stop.disabled=!on || !isAdmin();
+}
+
+function updateSimulatorReadings(id,d={}){
+  if(!id) return;
+  if(d.simulated || id===simulatorDeviceId) simulatorDeviceId=id;
+  const idInp=document.getElementById('sim-device-id');
+  if(idInp && idInp.value!==simulatorDeviceId) idInp.value=simulatorDeviceId;
+  const t=d.temp ?? devices[id]?.temp;
+  const h=d.humidity ?? devices[id]?.humidity;
+  const r=d.rssi ?? devices[id]?.rssi;
+  document.getElementById('sim-temp-val').textContent=(t!==undefined&&t!==null)?Number(t).toFixed(1):'—';
+  document.getElementById('sim-humid-val').textContent=(h!==undefined&&h!==null)?Number(h).toFixed(1):'—';
+  document.getElementById('sim-rssi-val').textContent=(r!==undefined&&r!==null)?r:'—';
+}
+
+async function loadSimulatorStatus(){
+  try{
+    const st=await apiFetch('/api/simulator/status');
+    simulatorDeviceId=st.device_id||'sim-sensor-01';
+    const idInp=document.getElementById('sim-device-id'); if(idInp) idInp.value=simulatorDeviceId;
+    const tb=document.getElementById('sim-temp-base'); if(tb) tb.value=st.temp_base??29;
+    const hb=document.getElementById('sim-humid-base'); if(hb) hb.value=st.humid_base??62;
+    const iv=document.getElementById('sim-interval'); if(iv) iv.value=st.interval_sec??2;
+    setSimulatorStatus(!!st.running);
+  }catch(e){
+    addLog('Simulator','Status simulator belum tersedia: '+e.message,'warn');
+  }
+}
+
+async function startSimulator(){
+  if(!isAdmin()){ showToast('Simulator hanya bisa dijalankan admin','warn'); return; }
+  const body={
+    device_id: (document.getElementById('sim-device-id').value||'sim-sensor-01').trim(),
+    name: 'Simulasi Suhu & Humid',
+    temp_base: parseFloat(document.getElementById('sim-temp-base').value)||29,
+    temp_variation: 3,
+    humid_base: parseFloat(document.getElementById('sim-humid-base').value)||62,
+    humid_variation: 12,
+    interval_sec: parseFloat(document.getElementById('sim-interval').value)||2
+  };
+  try{
+    const res=await apiFetch('/api/simulator/start',{method:'POST',body});
+    simulatorDeviceId=res.device_id||body.device_id;
+    chartDeviceId=simulatorDeviceId;
+    if(!tempHistory[simulatorDeviceId]) tempHistory[simulatorDeviceId]=[];
+    setSimulatorStatus(true);
+    updateDeviceSelects();
+    document.getElementById('chart-device-select').value=simulatorDeviceId;
+    showToast('✅ Simulator suhu & humidity dimulai','ok');
+    addLog('Simulator','Simulasi dimulai untuk '+simulatorDeviceId,'ok');
+  }catch(e){ showToast('Gagal mulai simulator: '+e.message,'error'); }
+}
+
+async function stopSimulator(){
+  if(!isAdmin()){ showToast('Simulator hanya bisa dihentikan admin','warn'); return; }
+  try{
+    await apiFetch('/api/simulator/stop',{method:'POST'});
+    setSimulatorStatus(false);
+    showToast('Simulator dihentikan','warn');
+    addLog('Simulator','Simulasi dihentikan','warn');
+  }catch(e){ showToast('Gagal stop simulator: '+e.message,'error'); }
+}
+
 // ---- MAP / GPS ----
 function initMap(){
   gpsMap=L.map('gps-map',{zoomControl:true}).setView([-2.5,118.0],5);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
     attribution:'© OpenStreetMap',maxZoom:19
   }).addTo(gpsMap);
+  gpsMap.on('click', handleGeofenceMapClick);
   // Load semua lokasi terakhir saat peta dibuka pertama kali
   loadAllLastGPS();
 }
@@ -1171,11 +1315,14 @@ async function loadAllLastGPS(){
 
 async function switchGPSDevice(id){
   currentGPSDevice=id;
-  if(!id) return;
+  cancelGeofenceEdit(false);
+  if(!id){
+    document.getElementById('geofence-info').textContent='Pilih tracker GPS terlebih dahulu, lalu klik Atur Area.';
+    if(geofenceCircle){ geofenceCircle.remove(); geofenceCircle=null; }
+    return;
+  }
   // Tampilkan data dari memory dulu
   if(devices[id]&&devices[id].lat) updateGPSDisplay(id,devices[id]);
-  // Load geofence info
-  loadGeofenceInfo();
   // Load lokasi terakhir dari backend (persisten) jika device offline
   try {
     const last = await apiFetch('/api/devices/'+id+'/gps/last');
@@ -1194,6 +1341,7 @@ async function switchGPSDevice(id){
   } catch(e){
     // Tidak ada data GPS tersimpan — normal untuk device baru
   }
+  await loadGeofenceInfo();
   loadGPSHistory();
 }
 
@@ -1468,17 +1616,25 @@ async function savePins(){
 function openAddModal(){if(!isAdmin())return;document.getElementById('modal-add').classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 function selType(el){document.querySelectorAll('.type-opt').forEach(o=>o.classList.remove('sel'));el.classList.add('sel');selTypeVal=el.dataset.t;}
-function addDeviceLocal(){
+async function addDeviceLocal(){
   if(!isAdmin()) return;
   const id=document.getElementById('m-id').value.trim();
   const name=document.getElementById('m-name').value.trim();
   if(!id||!name){alert('Device ID dan nama wajib diisi');return;}
   if(devices[id]){alert('Device ID sudah ada');return;}
-  devices[id]={device_id:id,name,type:selTypeVal,online:false};
-  if(selTypeVal==='gps_tracker') devices[id].device_type='gps_tracker';
-  closeModal('modal-add');
-  document.getElementById('m-id').value='';document.getElementById('m-name').value='';
-  renderAll();addLog(id,'Device ditambahkan','info');
+  try{
+    const data=await apiFetch('/api/devices',{method:'POST',body:{device_id:id,name,type:selTypeVal,device_type:selTypeVal}});
+    devices[id]={...(data.device||{}),device_id:id,online:false};
+    closeModal('modal-add');
+    document.getElementById('m-id').value='';document.getElementById('m-name').value='';
+    await fetchDevices();
+    renderAll(); updateDeviceSelects();
+    addLog(id,'Device ditambahkan ke server','ok');
+    showToast('✅ Device '+id+' ditambahkan','ok');
+  }catch(e){
+    addLog('System','Gagal tambah device: '+e.message,'error');
+    alert('Gagal tambah device: '+e.message);
+  }
 }
 async function removeDevice(id){
   if(!isAdmin()){addLog('System','Akses ditolak','error');return;}
@@ -1682,7 +1838,7 @@ const i18n = {
     nav_settings:'Settings', nav_section_admin:'Admin', nav_section_system:'Sistem',
     alert_title:'Alert & Jadwal', alert_sub:'Notifikasi suhu, jadwal relay otomatis, geofencing GPS',
     alert_sensor:'Batas Sensor', alert_schedule:'Jadwal Relay Otomatis',
-    alert_telegram:'Notifikasi Telegram', telegram_hint:'Isi TELEGRAM_BOT_TOKEN dan TELEGRAM_CHAT_ID di Railway Variables.',
+    alert_telegram:'Notifikasi Telegram & Instagram', telegram_hint:'Telegram: isi TELEGRAM_BOT_TOKEN dan TELEGRAM_CHAT_ID. Instagram: isi INSTAGRAM_ACCESS_TOKEN, INSTAGRAM_RECIPIENT_ID, dan opsional INSTAGRAM_ACCOUNT_ID di Railway Variables.',
     telegram_test:'Kirim Pesan Tes', settings_server:'Ganti Server URL', settings_save:'Simpan & Reconnect',
     settings_password:'Ganti Password', settings_change_pass:'Ubah Password',
     settings_storage:'Penyimpanan Data', settings_storage_info:'Info Storage',
@@ -1693,7 +1849,7 @@ const i18n = {
     nav_settings:'Settings', nav_section_admin:'Admin', nav_section_system:'System',
     alert_title:'Alert & Schedule', alert_sub:'Temperature alerts, relay schedules, GPS geofencing',
     alert_sensor:'Sensor Limits', alert_schedule:'Auto Relay Schedule',
-    alert_telegram:'Telegram Notification', telegram_hint:'Fill TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID in Railway Variables.',
+    alert_telegram:'Telegram & Instagram Notification', telegram_hint:'Telegram: fill TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID. Instagram: fill INSTAGRAM_ACCESS_TOKEN, INSTAGRAM_RECIPIENT_ID, and optional INSTAGRAM_ACCOUNT_ID in Railway Variables.',
     telegram_test:'Send Test Message', settings_server:'Change Server URL', settings_save:'Save & Reconnect',
     settings_password:'Change Password', settings_change_pass:'Update Password',
     settings_storage:'Data Storage', settings_storage_info:'Storage Info',
@@ -1708,11 +1864,21 @@ function applyI18n(){
     if(i18n[currentLang]&&i18n[currentLang][key]) el.textContent=i18n[currentLang][key];
   });
   document.getElementById('lang-btn').textContent=currentLang.toUpperCase();
+  const sel=document.getElementById('lang-select');
+  if(sel) sel.value=currentLang;
 }
 
 function toggleLang(){
   currentLang = currentLang==='id' ? 'en' : 'id';
   localStorage.setItem('esp32_lang', currentLang);
+  applyI18n();
+}
+
+function setLang(lang){
+  currentLang = lang === 'en' ? 'en' : 'id';
+  localStorage.setItem('esp32_lang', currentLang);
+  const sel=document.getElementById('lang-select');
+  if(sel) sel.value=currentLang;
   applyI18n();
 }
 
@@ -1853,157 +2019,375 @@ async function deleteAlert(devId){
 }
 
 // Schedule modal
-function openScheduleModal(){
-  const devOptions=Object.values(devices).map(d=>`<option value="${d.device_id}">${d.name||d.device_id}</option>`).join('');
+async function openScheduleModal(){
+  if(!isAdmin()) return;
+  const devList=Object.values(devices);
+  if(!devList.length){ showToast('Belum ada device untuk dijadwalkan','warn'); return; }
+
+  // Pastikan config pin relay sudah tersedia agar pilihan pin tidak kosong.
+  for(const d of devList){
+    if(!devicePins[d.device_id]){
+      try{ const pins=await apiFetch('/api/devices/'+d.device_id+'/pins'); if(pins) devicePins[d.device_id]=pins; }catch(e){}
+    }
+  }
+
+  document.getElementById('modal-sch-dyn')?.remove();
+  const devOptions=devList.map(d=>`<option value="${d.device_id}">${d.name||d.device_id}</option>`).join('');
   const modal=document.createElement('div');
   modal.className='modal-bg open';
   modal.id='modal-sch-dyn';
   modal.innerHTML=`<div class="modal">
     <div class="modal-title"><span>Tambah Jadwal Relay</span><button class="modal-close" onclick="document.getElementById('modal-sch-dyn').remove()">&times;</button></div>
-    <div class="form-row"><label class="form-label">Device</label><select class="form-select" id="sch-dev">${devOptions}</select></div>
+    <div class="form-row"><label class="form-label">Device</label><select class="form-select" id="sched-dev" onchange="fillSchedulePins()">${devOptions}</select></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-      <div class="form-row"><label class="form-label">GPIO Pin</label><input type="number" class="form-input" id="sch-pin" value="4" min="0" max="39"></div>
-      <div class="form-row"><label class="form-label">Aksi</label><select class="form-select" id="sch-action"><option value="on">ON</option><option value="off">OFF</option></select></div>
-      <div class="form-row"><label class="form-label">Jam (0-23)</label><input type="number" class="form-input" id="sch-hour" value="${new Date().getHours()}" min="0" max="23"></div>
-      <div class="form-row"><label class="form-label">Menit (0-59)</label><input type="number" class="form-input" id="sch-min" value="0" min="0" max="59"></div>
+      <div class="form-row"><label class="form-label">GPIO Relay</label><select class="form-select" id="sched-pin"></select></div>
+      <div class="form-row"><label class="form-label">Aksi</label><select class="form-select" id="sched-action"><option value="on">ON</option><option value="off">OFF</option></select></div>
+      <div class="form-row"><label class="form-label">Jam</label><input type="time" class="form-input" id="sched-time" value="${String(new Date().getHours()).padStart(2,'0')}:00"></div>
+      <div class="form-row"><label class="form-label">Label</label><input type="text" class="form-input" id="sched-label" placeholder="mis. Lampu pagi"></div>
     </div>
-    <div class="form-row"><label class="form-label">Label (opsional)</label><input type="text" class="form-input" id="sch-label" placeholder="mis. Lampu pagi"></div>
+    <div class="form-row">
+      <label class="form-label">Hari Aktif</label>
+      <div style="display:flex;gap:6px;flex-wrap:wrap" id="sched-days">
+        <label style="font-size:12px;display:flex;align-items:center;gap:4px"><input type="checkbox" value="0" checked> Sen</label>
+        <label style="font-size:12px;display:flex;align-items:center;gap:4px"><input type="checkbox" value="1" checked> Sel</label>
+        <label style="font-size:12px;display:flex;align-items:center;gap:4px"><input type="checkbox" value="2" checked> Rab</label>
+        <label style="font-size:12px;display:flex;align-items:center;gap:4px"><input type="checkbox" value="3" checked> Kam</label>
+        <label style="font-size:12px;display:flex;align-items:center;gap:4px"><input type="checkbox" value="4" checked> Jum</label>
+        <label style="font-size:12px;display:flex;align-items:center;gap:4px"><input type="checkbox" value="5" checked> Sab</label>
+        <label style="font-size:12px;display:flex;align-items:center;gap:4px"><input type="checkbox" value="6" checked> Min</label>
+      </div>
+    </div>
+    <div id="sched-err" style="color:var(--accent3);font-size:12px;min-height:16px;margin-bottom:.5rem"></div>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="document.getElementById('modal-sch-dyn').remove()">Batal</button>
       <button class="btn-primary" onclick="saveSchedule()">Tambah Jadwal</button>
     </div>
   </div>`;
   document.body.appendChild(modal);
+  fillSchedulePins();
+}
+
+function fillSchedulePins(){
+  const devId=document.getElementById('sched-dev')?.value;
+  const pinSel=document.getElementById('sched-pin');
+  if(!devId||!pinSel) return;
+  const pins=(devicePins[devId]||[]).filter(p=>p.type==='relay');
+  if(pins.length){
+    pinSel.innerHTML=pins.map(p=>`<option value="${p.pin}">GPIO${p.pin} — ${p.name||'Relay'}</option>`).join('');
+  } else {
+    // Tetap sediakan pilihan manual agar jadwal bisa dibuat sebelum pin config lengkap.
+    pinSel.innerHTML='<option value="4">GPIO4 — Relay 1</option><option value="5">GPIO5 — Relay 2</option>';
+  }
 }
 
 async function saveSchedule(){
+  const err=document.getElementById('sched-err');
+  if(err) err.textContent='';
+  const devId=document.getElementById('sched-dev')?.value;
+  const pin=parseInt(document.getElementById('sched-pin')?.value);
+  const timeVal=document.getElementById('sched-time')?.value||'';
+  const [hh,mm]=timeVal.split(':').map(x=>parseInt(x));
+  const days=[...document.querySelectorAll('#sched-days input:checked')].map(x=>parseInt(x.value));
+
+  if(!devId){ if(err) err.textContent='Pilih device dulu'; return; }
+  if(isNaN(pin)){ if(err) err.textContent='Pilih GPIO relay'; return; }
+  if(isNaN(hh)||isNaN(mm)){ if(err) err.textContent='Jam jadwal tidak valid'; return; }
+  if(!days.length){ if(err) err.textContent='Pilih minimal satu hari'; return; }
+
   const body={
-    device_id: document.getElementById('sch-dev').value,
-    pin:       parseInt(document.getElementById('sch-pin').value),
-    action:    document.getElementById('sch-action').value,
-    cron_hour: parseInt(document.getElementById('sch-hour').value),
-    cron_min:  parseInt(document.getElementById('sch-min').value),
-    label:     document.getElementById('sch-label').value.trim(),
-    enabled:   true, days:[0,1,2,3,4,5,6],
+    device_id: devId,
+    pin,
+    action: document.getElementById('sched-action').value,
+    cron_hour: hh,
+    cron_min: mm,
+    label: document.getElementById('sched-label').value.trim(),
+    enabled: true,
+    days,
   };
   try{
-    await apiFetch('/api/schedules',{method:'POST',body});
-    addLog('System','Jadwal ditambahkan','ok');
+    const res=await apiFetch('/api/schedules',{method:'POST',body});
+    addLog('System','Jadwal ditambahkan: '+(res?.id||''),'ok');
+    showToast('✅ Jadwal berhasil ditambahkan','ok');
     document.getElementById('modal-sch-dyn')?.remove();
-    renderScheduleList();
-  }catch(e){addLog('System','Error: '+e.message,'error');}
-}
-
-async function toggleSchedule(id, el){
-  const enabled=!el.classList.contains('on');
-  const sch=schedulesData.find(s=>s.id===id);
-  if(!sch) return;
-  try{
-    await apiFetch('/api/schedules/'+id,{method:'PUT',body:{...sch,enabled}});
-    el.classList.toggle('on',enabled);
-    addLog('System','Jadwal '+(enabled?'aktif':'nonaktif'),'ok');
-  }catch(e){addLog('System','Error: '+e.message,'error');}
-}
-
-async function deleteSchedule(id){
-  if(!confirm('Hapus jadwal ini?')) return;
-  try{ await apiFetch('/api/schedules/'+id,{method:'DELETE'}); renderScheduleList(); }
-  catch(e){addLog('System','Error: '+e.message,'error');}
+    await renderScheduleList();
+  }catch(e){
+    if(err) err.textContent='⚠ '+e.message;
+    addLog('System','Tambah jadwal gagal: '+e.message,'error');
+  }
 }
 
 async function testTelegram(){
-  try{ await apiFetch('/api/telegram/test',{method:'POST'}); addLog('System','Pesan Telegram terkirim','ok'); }
-  catch(e){addLog('System','Telegram error: '+e.message,'error');}
+  const out=document.getElementById('notify-test-result');
+  try{
+    const r=await apiFetch('/api/telegram/test',{method:'POST'});
+    if(out) out.textContent='Telegram OK: '+(r.message||'terkirim');
+    addLog('System','Pesan Telegram terkirim','ok');
+    showToast('✅ Test Telegram terkirim','ok');
+  }
+  catch(e){
+    if(out) out.textContent='Telegram ERROR: '+e.message;
+    addLog('System','Telegram error: '+e.message,'error');
+    showToast('⚠ Telegram gagal: '+e.message,'error');
+  }
+}
+
+async function testInstagram(){
+  const out=document.getElementById('notify-test-result');
+  try{
+    const r=await apiFetch('/api/instagram/test',{method:'POST'});
+    if(out) out.textContent='Instagram OK: '+(r.message||'terkirim');
+    addLog('System','Pesan Instagram terkirim','ok');
+    showToast('✅ Test Instagram terkirim','ok');
+  }
+  catch(e){
+    if(out) out.textContent='Instagram ERROR: '+e.message;
+    addLog('System','Instagram error: '+e.message,'error');
+    showToast('⚠ Instagram gagal: '+e.message,'error');
+  }
+}
+
+async function testAllNotifications(){
+  const out=document.getElementById('notify-test-result');
+  try{
+    const r=await apiFetch('/api/notify/test',{method:'POST'});
+    if(out) out.textContent=JSON.stringify(r.result||r,null,2);
+    addLog('System','Test semua notifikasi diproses','ok');
+    showToast('✅ Test notifikasi diproses','ok');
+  }
+  catch(e){
+    if(out) out.textContent='NOTIFY ERROR: '+e.message;
+    addLog('System','Notify error: '+e.message,'error');
+    showToast('⚠ Test notifikasi gagal','error');
+  }
 }
 
 // ============================================================
 // GEOFENCE
 // ============================================================
 let geofenceCircle=null;
+let geofenceDraftMarker=null;
+let geofencePickMode=false;
+
+function isValidLatLng(lat,lng){
+  return Number.isFinite(lat) && Number.isFinite(lng) && lat>=-90 && lat<=90 && lng>=-180 && lng<=180;
+}
+
+function setGeofenceError(msg=''){
+  const el=document.getElementById('gf-err');
+  if(el) el.textContent=msg;
+}
+
+function cancelGeofenceEdit(reloadSaved=true){
+  geofencePickMode=false;
+  const ed=document.getElementById('geofence-editor');
+  if(ed) ed.style.display='none';
+  const btn=document.getElementById('gf-pick-btn');
+  if(btn) btn.innerHTML='<i class="ti ti-map-pin-plus" style="font-size:12px"></i> Pilih Titik di Peta';
+  if(geofenceDraftMarker){ geofenceDraftMarker.remove(); geofenceDraftMarker=null; }
+  setGeofenceError('');
+  if(reloadSaved && currentGPSDevice) loadGeofenceInfo();
+}
+
+function getCurrentTrackerLatLng(){
+  if(!currentGPSDevice) return null;
+  const d=devices[currentGPSDevice]||{};
+  let lat=parseFloat(d.lat), lng=parseFloat(d.lng);
+  if(isValidLatLng(lat,lng)) return {lat,lng};
+  lat=parseFloat(document.getElementById('gps-lat')?.textContent);
+  lng=parseFloat(document.getElementById('gps-lng')?.textContent);
+  if(isValidLatLng(lat,lng)) return {lat,lng};
+  const m=gpsMarkers[currentGPSDevice];
+  if(m){ const p=m.getLatLng(); return {lat:p.lat,lng:p.lng}; }
+  return null;
+}
+
+function drawGeofenceArea(gf, fit=false){
+  if(!gpsMap || !gf) return;
+  const lat=parseFloat(gf.lat), lng=parseFloat(gf.lng), radius=parseFloat(gf.radius_m||gf.radius||100);
+  if(!isValidLatLng(lat,lng) || !Number.isFinite(radius)) return;
+  if(geofenceCircle) geofenceCircle.remove();
+  geofenceCircle=L.circle([lat,lng],{
+    radius: radius,
+    color:'#39d353',
+    fillColor:'rgba(57,211,83,.12)',
+    fillOpacity:.35,
+    weight:2
+  }).addTo(gpsMap);
+  geofenceCircle.bindPopup(`<b>${gf.name||'Area'}</b><br>Radius: ${Math.round(radius)}m<br>${lat.toFixed(6)}, ${lng.toFixed(6)}`);
+  if(fit) gpsMap.fitBounds(geofenceCircle.getBounds().pad(0.25));
+}
+
+function updateDraftMarker(lat,lng){
+  if(!gpsMap || !isValidLatLng(lat,lng)) return;
+  const pos=[lat,lng];
+  if(geofenceDraftMarker) geofenceDraftMarker.setLatLng(pos);
+  else {
+    geofenceDraftMarker=L.marker(pos,{draggable:true}).addTo(gpsMap);
+    geofenceDraftMarker.bindPopup('Pusat area baru').openPopup();
+    geofenceDraftMarker.on('dragend',()=>{
+      const p=geofenceDraftMarker.getLatLng();
+      setGeofenceInputs(p.lat,p.lng,true);
+    });
+  }
+}
+
+function setGeofenceInputs(lat,lng,preview=true){
+  lat=parseFloat(lat); lng=parseFloat(lng);
+  if(!isValidLatLng(lat,lng)) return;
+  document.getElementById('gf-lat').value=lat.toFixed(6);
+  document.getElementById('gf-lng').value=lng.toFixed(6);
+  updateDraftMarker(lat,lng);
+  if(preview){
+    const radius=parseFloat(document.getElementById('gf-radius')?.value)||100;
+    drawGeofenceArea({lat,lng,radius_m:radius,name:document.getElementById('gf-name')?.value||'Preview Area'});
+  }
+}
 
 async function loadGeofenceInfo(){
   if(!currentGPSDevice) return;
   try{
     const gf=await apiFetch('/api/devices/'+currentGPSDevice+'/geofence');
     const el=document.getElementById('geofence-info');
-    if(gf && gf.lat){
+    if(gf && isValidLatLng(parseFloat(gf.lat),parseFloat(gf.lng))){
       el.innerHTML=`<b>${gf.name||'Area'}</b> · Radius: ${gf.radius_m}m<br>
-        Center: ${parseFloat(gf.lat).toFixed(5)}, ${parseFloat(gf.lng).toFixed(5)}<br>
+        Center: ${parseFloat(gf.lat).toFixed(6)}, ${parseFloat(gf.lng).toFixed(6)}<br>
         Alert: ${gf.alert_on_exit?'Saat keluar area':'Saat masuk area'}`;
-      // Gambar lingkaran di peta
-      if(geofenceCircle) geofenceCircle.remove();
-      geofenceCircle=L.circle([parseFloat(gf.lat),parseFloat(gf.lng)],{
-        radius:gf.radius_m,color:'#39d353',fillColor:'rgba(57,211,83,.1)',weight:2
-      }).addTo(gpsMap);
+      drawGeofenceArea(gf,true);
+      document.getElementById('gf-name').value=gf.name||'Area';
+      document.getElementById('gf-radius').value=gf.radius_m||100;
+      document.getElementById('gf-lat').value=parseFloat(gf.lat).toFixed(6);
+      document.getElementById('gf-lng').value=parseFloat(gf.lng).toFixed(6);
+      document.getElementById('gf-alert').value=gf.alert_on_exit?'exit':'enter';
     } else {
-      el.textContent='Belum ada geofence untuk tracker ini.';
+      el.textContent='Belum ada geofence untuk tracker ini. Klik Atur Area untuk membuat zona.';
       if(geofenceCircle){ geofenceCircle.remove(); geofenceCircle=null; }
     }
-  }catch(e){ document.getElementById('geofence-info').textContent='Belum ada geofence.'; }
+  }catch(e){
+    document.getElementById('geofence-info').textContent='Belum ada geofence. Klik Atur Area untuk membuat zona.';
+    if(geofenceCircle){ geofenceCircle.remove(); geofenceCircle=null; }
+  }
 }
 
-function setupGeofence(){
-  if(!currentGPSDevice){ addLog('GPS','Pilih tracker dulu','warn'); return; }
-  if(!isAdmin()){ addLog('System','Hanya admin','error'); return; }
-  const d=devices[currentGPSDevice];
-  const lat=d?.lat||'-2.5'; const lng=d?.lng||'118.0';
-  const modal=document.createElement('div');
-  modal.className='modal-bg open'; modal.id='modal-geo-dyn';
-  modal.innerHTML=`<div class="modal">
-    <div class="modal-title"><span>Set Geofence — ${d?.name||currentGPSDevice}</span>
-      <button class="modal-close" onclick="document.getElementById('modal-geo-dyn').remove()">&times;</button></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-      <div class="form-row"><label class="form-label">Latitude</label><input type="number" class="form-input" id="gf-lat" value="${lat}" step="0.000001"></div>
-      <div class="form-row"><label class="form-label">Longitude</label><input type="number" class="form-input" id="gf-lng" value="${lng}" step="0.000001"></div>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-      <div class="form-row"><label class="form-label">Radius (meter)</label><input type="number" class="form-input" id="gf-radius" value="100" min="10"></div>
-      <div class="form-row"><label class="form-label">Nama Area</label><input type="text" class="form-input" id="gf-name" placeholder="Kantor"></div>
-    </div>
-    <div class="form-row"><label class="form-label">Alert saat</label>
-      <select class="form-select" id="gf-alert">
-        <option value="exit">Keluar area</option>
-        <option value="enter">Masuk area</option>
-      </select></div>
-    <div style="font-size:11px;color:var(--text3);margin-bottom:.5rem">💡 Klik lokasi di peta untuk set koordinat secara langsung</div>
-    <div class="modal-footer">
-      <button class="btn-cancel" onclick="document.getElementById('modal-geo-dyn').remove()">Batal</button>
-      <button class="btn-primary" onclick="saveGeofence()">Simpan Geofence</button>
-    </div>
-  </div>`;
-  document.body.appendChild(modal);
-  // Klik peta untuk set koordinat
-  gpsMap.once('click', e=>{
-    document.getElementById('gf-lat').value=e.latlng.lat.toFixed(6);
-    document.getElementById('gf-lng').value=e.latlng.lng.toFixed(6);
-  });
+async function setupGeofence(){
+  if(!currentGPSDevice){
+    showToast('Pilih tracker GPS dulu','warn');
+    addLog('GPS','Pilih tracker dulu sebelum setting area','warn');
+    return;
+  }
+  if(!isAdmin()){
+    showToast('Setting area hanya bisa admin','warn');
+    addLog('System','Hanya admin yang bisa setting area','error');
+    return;
+  }
+  const ed=document.getElementById('geofence-editor');
+  ed.style.display='block';
+  setGeofenceError('');
+
+  // Ambil geofence tersimpan terlebih dahulu, jika ada.
+  let hasSaved=false;
+  try{
+    const gf=await apiFetch('/api/devices/'+currentGPSDevice+'/geofence');
+    if(gf && isValidLatLng(parseFloat(gf.lat),parseFloat(gf.lng))){
+      document.getElementById('gf-name').value=gf.name||'Area';
+      document.getElementById('gf-radius').value=gf.radius_m||100;
+      document.getElementById('gf-alert').value=gf.alert_on_exit?'exit':'enter';
+      setGeofenceInputs(gf.lat,gf.lng,true);
+      hasSaved=true;
+    }
+  }catch(e){}
+
+  if(!hasSaved){
+    const pos=getCurrentTrackerLatLng() || gpsMap.getCenter();
+    document.getElementById('gf-name').value=devices[currentGPSDevice]?.name ? 'Area '+devices[currentGPSDevice].name : 'Area';
+    document.getElementById('gf-radius').value=document.getElementById('gf-radius').value||100;
+    setGeofenceInputs(pos.lat,pos.lng,true);
+    gpsMap.setView([pos.lat,pos.lng], Math.max(gpsMap.getZoom(), 15));
+  }
+  setTimeout(()=>gpsMap.invalidateSize(),100);
+}
+
+function pickGeofenceOnMap(){
+  if(!currentGPSDevice){ showToast('Pilih tracker dulu','warn'); return; }
+  geofencePickMode=!geofencePickMode;
+  const btn=document.getElementById('gf-pick-btn');
+  if(geofencePickMode){
+    if(btn) btn.innerHTML='<i class="ti ti-hand-click" style="font-size:12px"></i> Klik Peta Sekarang...';
+    showToast('Klik lokasi pusat area di peta','info',5000);
+    addLog('GPS','Mode pilih titik geofence aktif','info');
+  } else {
+    if(btn) btn.innerHTML='<i class="ti ti-map-pin-plus" style="font-size:12px"></i> Pilih Titik di Peta';
+  }
+}
+
+function handleGeofenceMapClick(e){
+  if(!geofencePickMode) return;
+  setGeofenceInputs(e.latlng.lat,e.latlng.lng,true);
+  geofencePickMode=false;
+  const btn=document.getElementById('gf-pick-btn');
+  if(btn) btn.innerHTML='<i class="ti ti-map-pin-plus" style="font-size:12px"></i> Pilih Titik di Peta';
+  showToast('Titik pusat area dipilih','ok');
+}
+
+function useTrackerPositionForGeofence(){
+  const pos=getCurrentTrackerLatLng();
+  if(!pos){
+    setGeofenceError('Posisi tracker belum ada. Pilih titik manual di peta atau isi koordinat.');
+    showToast('Posisi tracker belum tersedia','warn');
+    return;
+  }
+  setGeofenceInputs(pos.lat,pos.lng,true);
+  gpsMap.setView([pos.lat,pos.lng],15);
+  showToast('Koordinat diisi dari posisi tracker','ok');
 }
 
 async function saveGeofence(){
-  const body={
-    lat:         parseFloat(document.getElementById('gf-lat').value),
-    lng:         parseFloat(document.getElementById('gf-lng').value),
-    radius_m:    parseFloat(document.getElementById('gf-radius').value)||100,
-    name:        document.getElementById('gf-name').value||'Area',
-    alert_on_exit: document.getElementById('gf-alert').value==='exit',
-  };
+  if(!currentGPSDevice){ showToast('Pilih tracker dulu','warn'); return; }
+  if(!isAdmin()){ showToast('Hanya admin yang bisa simpan area','warn'); return; }
+  const lat=parseFloat(document.getElementById('gf-lat').value);
+  const lng=parseFloat(document.getElementById('gf-lng').value);
+  const radius=parseFloat(document.getElementById('gf-radius').value);
+  const name=(document.getElementById('gf-name').value||'Area').trim();
+  if(!isValidLatLng(lat,lng)){
+    setGeofenceError('Latitude / longitude tidak valid. Gunakan tombol Pilih Titik di Peta atau isi manual.');
+    return;
+  }
+  if(!Number.isFinite(radius) || radius<10 || radius>10000){
+    setGeofenceError('Radius harus 10 sampai 10000 meter.');
+    return;
+  }
+  const body={lat,lng,radius_m:radius,name,alert_on_exit:document.getElementById('gf-alert').value==='exit'};
   try{
-    await apiFetch('/api/devices/'+currentGPSDevice+'/geofence',{method:'PUT',body});
-    document.getElementById('modal-geo-dyn')?.remove();
-    addLog(currentGPSDevice,'Geofence disimpan','ok');
-    showToast('✅ Geofence disimpan','ok');
-    loadGeofenceInfo();
-  }catch(e){addLog('System','Error: '+e.message,'error');}
+    const res=await apiFetch('/api/devices/'+currentGPSDevice+'/geofence',{method:'PUT',body});
+    addLog(currentGPSDevice,'Geofence disimpan: '+name+' radius '+radius+'m','ok');
+    showToast('✅ Area GPS berhasil disimpan','ok');
+    drawGeofenceArea(body,true);
+    if(geofenceDraftMarker){ geofenceDraftMarker.remove(); geofenceDraftMarker=null; }
+    geofencePickMode=false;
+    document.getElementById('geofence-editor').style.display='none';
+    await loadGeofenceInfo();
+  }catch(e){
+    setGeofenceError('⚠ '+e.message);
+    addLog('System','Gagal simpan geofence: '+e.message,'error');
+    showToast('Gagal simpan area: '+e.message,'error');
+  }
 }
 
 async function deleteGeofence(){
-  if(!confirm('Hapus geofence?')) return;
+  if(!currentGPSDevice){ showToast('Pilih tracker dulu','warn'); return; }
+  if(!isAdmin()){ showToast('Hapus area hanya bisa admin','warn'); return; }
+  if(!confirm('Hapus geofence untuk tracker ini?')) return;
   try{
     await apiFetch('/api/devices/'+currentGPSDevice+'/geofence',{method:'DELETE'});
     addLog(currentGPSDevice,'Geofence dihapus','warn');
+    showToast('Area GPS dihapus','warn');
     if(geofenceCircle){ geofenceCircle.remove(); geofenceCircle=null; }
-    document.getElementById('geofence-info').textContent='Belum ada geofence.';
-  }catch(e){addLog('System','Error: '+e.message,'error');}
+    if(geofenceDraftMarker){ geofenceDraftMarker.remove(); geofenceDraftMarker=null; }
+    document.getElementById('geofence-info').textContent='Belum ada geofence untuk tracker ini. Klik Atur Area untuk membuat zona.';
+    cancelGeofenceEdit(false);
+  }catch(e){
+    addLog('System','Error hapus geofence: '+e.message,'error');
+    showToast('Gagal hapus area: '+e.message,'error');
+  }
 }
 
 // ============================================================
@@ -2031,12 +2415,17 @@ async function changePassword(){
 // ============================================================
 async function exportCSV(devId){
   try{
+    devId = devId || document.getElementById('export-device-sel')?.value;
+    if(!devId){ alert('Pilih device dulu'); return; }
     const name=devices[devId]?.name||devId;
     addLog(devId,'Mengunduh CSV...','info');
     const res=await fetch(BASE_URL+'/api/devices/'+devId+'/history/export',{
       headers:{'Authorization':'Bearer '+token}
     });
-    if(!res.ok) throw new Error('Export gagal');
+    if(!res.ok){
+      const err=await res.json().catch(()=>({detail:'Export gagal'}));
+      throw new Error(err.detail||'Export gagal');
+    }
     const blob=await res.blob();
     const url=URL.createObjectURL(blob);
     const a=document.createElement('a');
