@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ESP32 Hub</title>
+<title>ESP32 Hub v12</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
@@ -124,10 +124,11 @@ body.light .topbar,body.light .sidebar{box-shadow:0 1px 4px rgba(0,0,0,.1)}
 .metric .key{font-size:10px;color:var(--text3)}
 
 /* CHART */
-.chart-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1rem;margin-bottom:1rem}
-.chart-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem}
+.chart-wrap{background:linear-gradient(180deg,var(--bg2),rgba(88,166,255,.025));border:1px solid var(--border);border-radius:14px;padding:1rem;margin-bottom:1rem;overflow:hidden}
+.chart-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem;gap:8px;flex-wrap:wrap}
 .chart-title{font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em}
-canvas.chart{width:100%!important;height:260px!important}
+canvas.chart{width:100%!important;height:280px!important;display:block;transition:none;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;contain:layout paint}
+.chart-smooth-badge{font-size:10px;font-family:var(--mono);padding:2px 7px;border-radius:99px;background:rgba(63,185,80,.12);color:var(--accent2);border:1px solid rgba(63,185,80,.18)}
 
 /* SIMULATOR */
 .sim-panel{background:linear-gradient(135deg,rgba(88,166,255,.10),rgba(63,185,80,.07));border:1px solid var(--border);border-radius:12px;padding:1rem;margin-bottom:1rem}
@@ -174,6 +175,17 @@ canvas.chart{width:100%!important;height:260px!important}
 .gps-info-val{font-size:16px;font-weight:700;font-family:var(--mono);color:var(--cyan)}
 .gps-info-key{font-size:11px;color:var(--text3);margin-top:2px}
 .tracker-select{background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:6px 10px;color:var(--text);font-family:var(--font);font-size:13px;outline:none;cursor:pointer}
+.chart-select-wrap{position:relative;display:inline-flex;align-items:center;gap:6px}
+.chart-select-wrap .tracker-select{min-width:150px}
+@media (max-width:640px){
+  html,body{overscroll-behavior-y:none}
+  .chart-wrap{min-height:335px;touch-action:pan-y}
+  canvas.chart{height:280px!important}
+  #chart-device-select{font-size:16px!important;min-width:160px;max-width:54vw}
+  .sec-title{gap:8px;align-items:center}
+  .sec-title span{min-width:0}
+}
+
 
 /* LOGS */
 .log-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden}
@@ -364,12 +376,12 @@ canvas.chart{width:100%!important;height:260px!important}
       </div>
 
       <div class="sec-title"><span>Grafik Suhu & Humidity Real-time</span>
-        <select class="tracker-select" id="chart-device-select" onchange="switchChartDevice(this.value)" style="font-size:11px;padding:3px 8px">
+        <div class="chart-select-wrap"><select class="tracker-select" id="chart-device-select" onchange="switchChartDevice(this.value)" style="font-size:11px;padding:3px 8px">
           <option value="">Pilih device...</option>
-        </select>
+        </select></div>
       </div>
       <div class="chart-wrap">
-        <div class="chart-head"><span class="chart-title" id="chart-title">—</span><span style="font-size:11px;color:var(--text3);font-family:var(--mono)" id="chart-last">—</span></div>
+        <div class="chart-head"><span class="chart-title" id="chart-title">—</span><span class="chart-smooth-badge">SMOOTH LIVE</span><span style="font-size:11px;color:var(--text3);font-family:var(--mono)" id="chart-last">—</span></div>
         <canvas id="temp-chart" class="chart"></canvas>
       </div>
       <div class="sec-title"><span>Device Aktif</span>
@@ -1094,101 +1106,333 @@ function updateStats(s){
   updateDeviceSelects();
 }
 
+let selectOptionCache={chart:'',gps:'',export:''};
+
+function buildOptionSignature(list, predicate=()=>true){
+  return list.filter(predicate).map(d=>`${d.device_id}:${d.name||''}`).join('|');
+}
+
+function setSelectOptionsStable(sel, list, placeholder, cacheKey, predicate=()=>true){
+  if(!sel) return;
+  const filtered=list.filter(predicate);
+  const sig=filtered.map(d=>`${d.device_id}:${d.name||''}`).join('|');
+
+  // Jangan rebuild option saat user sedang membuka dropdown di HP.
+  // Rebuild saat focused bisa bikin native picker terasa bergetar/menutup sendiri.
+  if(document.activeElement===sel && selectOptionCache[cacheKey]===sig) return;
+  if(selectOptionCache[cacheKey]===sig && sel.options.length===filtered.length+1) return;
+
+  const prev=sel.value;
+  const frag=document.createDocumentFragment();
+  const opt=document.createElement('option');
+  opt.value=''; opt.textContent=placeholder;
+  frag.appendChild(opt);
+  filtered.forEach(d=>{
+    const o=document.createElement('option');
+    o.value=d.device_id;
+    o.textContent=d.name||d.device_id;
+    frag.appendChild(o);
+  });
+  sel.replaceChildren(frag);
+  if(filtered.some(d=>d.device_id===prev)) sel.value=prev;
+  selectOptionCache[cacheKey]=sig;
+}
+
 function updateDeviceSelects(){
   const list=Object.values(devices);
-  // Chart select — temp bisa string atau number, cukup cek tidak undefined
-  const withTemp=list.filter(d=>d.temp!==undefined&&d.temp!==null&&d.temp!=='');
+
   const cs=document.getElementById('chart-device-select');
-  const prev=cs.value;
-  cs.innerHTML='<option value="">Pilih device...</option>';
-  withTemp.forEach(d=>{
-    cs.innerHTML+=`<option value="${d.device_id}" ${d.device_id===prev?'selected':''}>${d.name||d.device_id}</option>`;
-  });
+  setSelectOptionsStable(cs, list, 'Pilih device...', 'chart', d=>d.temp!==undefined&&d.temp!==null&&d.temp!=='');
+
+  const withTemp=list.filter(d=>d.temp!==undefined&&d.temp!==null&&d.temp!=='');
   if(!chartDeviceId && withTemp.length){
     chartDeviceId=withTemp[0].device_id;
-    cs.value=chartDeviceId||'';
+    if(cs) cs.value=chartDeviceId||'';
     if(chartDeviceId && chartCtx) updateChart(chartDeviceId);
   }
-  // GPS select
-  const gs=document.getElementById('gps-device-select');
-  const prevG=gs.value;
-  gs.innerHTML='<option value="">Pilih tracker...</option>';
-  list.filter(d=>d.lat||d.device_type==='gps_tracker').forEach(d=>{
-    gs.innerHTML+=`<option value="${d.device_id}" ${d.device_id===prevG?'selected':''}>${d.name||d.device_id}</option>`;
-  });
 
-  // Export CSV select
+  const gs=document.getElementById('gps-device-select');
+  setSelectOptionsStable(gs, list, 'Pilih tracker...', 'gps', d=>d.lat||d.device_type==='gps_tracker');
+
   const es=document.getElementById('export-device-sel');
-  if(es){
-    const prevE=es.value;
-    es.innerHTML='<option value="">Pilih device...</option>';
-    list.forEach(d=>{
-      es.innerHTML+=`<option value="${d.device_id}" ${d.device_id===prevE?'selected':''}>${d.name||d.device_id}</option>`;
-    });
-  }
+  setSelectOptionsStable(es, list, 'Pilih device...', 'export');
 }
 
 // ---- CHART ----
+let chartState={
+  target:{labels:[],temps:[],humids:[]},
+  current:{labels:[],temps:[],humids:[]},
+  raf:null,
+  lastW:0,
+  lastH:0,
+  lastRender:0,
+  needsRedraw:true,
+  resizeTimer:null,
+  resizeObserver:null,
+  lastFitAt:0
+};
+
 function initChart(){
-  chartCtx=document.getElementById('temp-chart').getContext('2d');
-  drawChart([],[]);
-}
-function drawChart(labels,temps,humids=[]){
-  if(chartInstance) chartInstance=null;
-  const ctx=chartCtx;
-  ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
-  const W=ctx.canvas.offsetWidth||600,H=Math.max(220,ctx.canvas.offsetHeight||260);
-  ctx.canvas.width=W;ctx.canvas.height=H;
-  const pad={t:20,r:20,b:30,l:45};
-  const iW=W-pad.l-pad.r,iH=H-pad.t-pad.b;
-  if(!labels.length){
-    ctx.fillStyle='#484f58';ctx.font='12px JetBrains Mono';ctx.textAlign='center';
-    ctx.fillText('Belum ada data sensor',W/2,H/2);return;
+  chartCtx=document.getElementById('temp-chart').getContext('2d',{alpha:true});
+  fitChartCanvas(true);
+
+  // Di HP, address bar browser sering membuat event resize kecil-kecil.
+  // Kalau canvas ikut resize setiap frame, grafik terasa "bergetar".
+  // Karena itu resize hanya diproses setelah ukuran benar-benar stabil.
+  const scheduleFit=()=>{
+    clearTimeout(chartState.resizeTimer);
+    chartState.resizeTimer=setTimeout(()=>{
+      fitChartCanvas(false);
+      chartState.needsRedraw=true;
+    },260);
+  };
+  window.addEventListener('resize', scheduleFit, {passive:true});
+  if('ResizeObserver' in window){
+    chartState.resizeObserver=new ResizeObserver(scheduleFit);
+    chartState.resizeObserver.observe(chartCtx.canvas);
   }
-  const allVals=[...temps,...humids].filter(Boolean);
-  const mn=Math.min(...allVals)-2,mx=Math.max(...allVals)+2;
+
+  // Saat user menyentuh chart/select, hentikan gesture browser yang bisa memicu bounce.
+  chartCtx.canvas.addEventListener('touchstart', e=>e.stopPropagation(), {passive:true});
+  chartCtx.canvas.addEventListener('touchmove', e=>e.stopPropagation(), {passive:true});
+
+  setChartData([],[],[],true);
+  startSmoothChartLoop();
+}
+
+function fitChartCanvas(force=false){
+  if(!chartCtx) return;
+  const canvas=chartCtx.canvas;
+  const rect=canvas.getBoundingClientRect();
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  const cssW=Math.max(320,Math.floor(rect.width||canvas.offsetWidth||600));
+  const cssH=280; // tinggi dikunci supaya grafik tidak lompat di mobile
+  const pxW=Math.floor(cssW*dpr), pxH=Math.floor(cssH*dpr);
+
+  // Abaikan perubahan kecil 1-4px dari address bar/mobile viewport agar chart tidak jitter.
+  const diffW=Math.abs((chartState.lastW||0)-cssW);
+  const diffH=Math.abs((chartState.lastH||0)-cssH);
+  if(force || canvas.width===0 || diffW>6 || diffH>6){
+    canvas.width=pxW; canvas.height=pxH;
+    chartState.lastW=cssW; chartState.lastH=cssH;
+    chartCtx.setTransform(dpr,0,0,dpr,0,0);
+    chartState.needsRedraw=true;
+  }
+}
+
+function setChartData(labels,temps,humids=[],instant=false){
+  // Batasi titik supaya tetap ringan dan tidak patah-patah di HP.
+  const MAX_POINTS=80;
+  if(labels.length>MAX_POINTS){
+    labels=labels.slice(-MAX_POINTS);
+    temps=temps.slice(-MAX_POINTS);
+    humids=humids.slice(-MAX_POINTS);
+  }
+  chartState.target={labels:[...labels],temps:temps.map(Number),humids:humids.map(Number)};
+  if(instant || chartState.current.temps.length===0 || chartState.current.temps.length!==chartState.target.temps.length){
+    chartState.current={labels:[...labels],temps:[...chartState.target.temps],humids:[...chartState.target.humids]};
+  }
+  chartState.needsRedraw=true;
+}
+
+function startSmoothChartLoop(){
+  if(chartState.raf) cancelAnimationFrame(chartState.raf);
+  const tick=(now)=>{
+    const t=chartState.target, c=chartState.current;
+    let changed=chartState.needsRedraw;
+
+    // Interpolasi nilai agar chart bergerak halus, bukan kedip/reset tiap data masuk.
+    if(t.temps.length && c.temps.length===t.temps.length){
+      c.labels=[...t.labels];
+      for(let i=0;i<t.temps.length;i++){
+        const nv=t.temps[i];
+        const cv=Number.isFinite(c.temps[i])?c.temps[i]:nv;
+        const diff=nv-cv;
+        if(Math.abs(diff)>0.01){ c.temps[i]=cv+diff*0.16; changed=true; }
+        else c.temps[i]=nv;
+      }
+      for(let i=0;i<t.humids.length;i++){
+        const nv=t.humids[i];
+        const cv=Number.isFinite(c.humids[i])?c.humids[i]:nv;
+        const diff=nv-cv;
+        if(Math.abs(diff)>0.01){ c.humids[i]=cv+diff*0.16; changed=true; }
+        else c.humids[i]=nv;
+      }
+    }
+
+    // Hemat baterai HP: render maksimal sekitar 30 FPS saat animasi.
+    if(changed && now-chartState.lastRender>32){
+      renderSmoothChart(c.labels,c.temps,c.humids);
+      chartState.lastRender=now;
+      chartState.needsRedraw=false;
+    }
+    chartState.raf=requestAnimationFrame(tick);
+  };
+  chartState.raf=requestAnimationFrame(tick);
+}
+
+function getCssVar(name,fallback){
+  const v=getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return v||fallback;
+}
+
+function roundedRect(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+}
+
+function makeSmoothPath(ctx,pts){
+  if(!pts.length) return;
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x,pts[0].y);
+  if(pts.length===1){ ctx.lineTo(pts[0].x+0.01,pts[0].y); return; }
+  for(let i=0;i<pts.length-1;i++){
+    const p0=pts[i-1]||pts[i];
+    const p1=pts[i];
+    const p2=pts[i+1];
+    const p3=pts[i+2]||p2;
+    const cp1x=p1.x+(p2.x-p0.x)/6;
+    const cp1y=p1.y+(p2.y-p0.y)/6;
+    const cp2x=p2.x-(p3.x-p1.x)/6;
+    const cp2y=p2.y-(p3.y-p1.y)/6;
+    ctx.bezierCurveTo(cp1x,cp1y,cp2x,cp2y,p2.x,p2.y);
+  }
+}
+
+function renderSmoothChart(labels,temps,humids=[]){
+  const ctx=chartCtx;
+  const W=chartState.lastW||600,H=chartState.lastH||280;
+  ctx.clearRect(0,0,W,H);
+
+  const accent=getCssVar('--accent','#58a6ff');
+  const green=getCssVar('--accent2','#3fb950');
+  const text2=getCssVar('--text2','#8b949e');
+  const text3=getCssVar('--text3','#484f58');
+  const grid='rgba(139,148,158,.14)';
+  const pad={t:26,r:24,b:34,l:48};
+  const iW=W-pad.l-pad.r,iH=H-pad.t-pad.b;
+
+  // Background lembut.
+  const bg=ctx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'rgba(88,166,255,.045)');
+  bg.addColorStop(1,'rgba(63,185,80,.018)');
+  ctx.fillStyle=bg;
+  roundedRect(ctx,0,0,W,H,12);
+  ctx.fill();
+
+  if(!labels.length){
+    ctx.fillStyle=text3;ctx.font='12px JetBrains Mono';ctx.textAlign='center';
+    ctx.fillText('Belum ada data sensor',W/2,H/2);
+    return;
+  }
+
+  const nums=[...temps,...humids].filter(v=>Number.isFinite(v));
+  let mn=Math.min(...nums),mx=Math.max(...nums);
+  if(!Number.isFinite(mn)||!Number.isFinite(mx)){mn=0;mx=100;}
+  if(Math.abs(mx-mn)<1){mx+=1;mn-=1;}
+  const margin=(mx-mn)*0.12;
+  mn-=margin; mx+=margin;
+
   const scaleY=v=>pad.t+iH-(v-mn)/(mx-mn)*iH;
   const scaleX=i=>pad.l+i/(labels.length-1||1)*iW;
-  // Grid
-  ctx.strokeStyle='#21262d';ctx.lineWidth=1;
+
+  // Grid horizontal + label Y.
+  ctx.lineWidth=1;
   for(let i=0;i<=4;i++){
     const y=pad.t+i*iH/4;
+    ctx.strokeStyle=grid;
     ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(pad.l+iW,y);ctx.stroke();
     const val=mx-(mx-mn)*i/4;
-    ctx.fillStyle='#484f58';ctx.font='10px JetBrains Mono';ctx.textAlign='right';
-    ctx.fillText(val.toFixed(1),pad.l-4,y+3);
+    ctx.fillStyle=text3;ctx.font='10px JetBrains Mono';ctx.textAlign='right';
+    ctx.fillText(val.toFixed(1),pad.l-7,y+3);
   }
-  // X labels
-  const step=Math.max(1,Math.floor(labels.length/6));
+
+  // X label secukupnya agar tidak penuh.
+  const step=Math.max(1,Math.ceil(labels.length/6));
   labels.forEach((l,i)=>{
-    if(i%step===0){
-      ctx.fillStyle='#484f58';ctx.font='10px JetBrains Mono';ctx.textAlign='center';
-      ctx.fillText(l,scaleX(i),H-8);
+    if(i%step===0 || i===labels.length-1){
+      ctx.fillStyle=text3;ctx.font='10px JetBrains Mono';ctx.textAlign='center';
+      ctx.fillText(l,scaleX(i),H-10);
     }
   });
-  // Temp line
-  if(temps.length){
-    ctx.beginPath();ctx.strokeStyle='#58a6ff';ctx.lineWidth=2;ctx.lineJoin='round';
-    temps.forEach((v,i)=>{i===0?ctx.moveTo(scaleX(i),scaleY(v)):ctx.lineTo(scaleX(i),scaleY(v));});
+
+  const tempPts=temps.map((v,i)=>({x:scaleX(i),y:scaleY(v)}));
+  const humPts=humids.map((v,i)=>({x:scaleX(i),y:scaleY(v)}));
+
+  // Area suhu gradient.
+  if(tempPts.length){
+    makeSmoothPath(ctx,tempPts);
+    ctx.lineTo(tempPts[tempPts.length-1].x,H-pad.b);
+    ctx.lineTo(tempPts[0].x,H-pad.b);
+    ctx.closePath();
+    const fill=ctx.createLinearGradient(0,pad.t,0,H-pad.b);
+    fill.addColorStop(0,'rgba(88,166,255,.28)');
+    fill.addColorStop(1,'rgba(88,166,255,0)');
+    ctx.fillStyle=fill;
+    ctx.fill();
+
+    ctx.save();
+    ctx.shadowColor='rgba(88,166,255,.35)';
+    ctx.shadowBlur=10;
+    makeSmoothPath(ctx,tempPts);
+    ctx.strokeStyle=accent;
+    ctx.lineWidth=3;
+    ctx.lineCap='round';
+    ctx.lineJoin='round';
     ctx.stroke();
-    // Fill
-    ctx.beginPath();temps.forEach((v,i)=>{i===0?ctx.moveTo(scaleX(i),scaleY(v)):ctx.lineTo(scaleX(i),scaleY(v));});
-    ctx.lineTo(scaleX(temps.length-1),H-pad.b);ctx.lineTo(pad.l,H-pad.b);ctx.closePath();
-    const grad=ctx.createLinearGradient(0,pad.t,0,H-pad.b);
-    grad.addColorStop(0,'rgba(88,166,255,0.2)');grad.addColorStop(1,'rgba(88,166,255,0)');
-    ctx.fillStyle=grad;ctx.fill();
+    ctx.restore();
   }
-  // Humidity line
-  if(humids.length){
-    ctx.beginPath();ctx.strokeStyle='#3fb950';ctx.lineWidth=1.5;ctx.setLineDash([4,3]);ctx.lineJoin='round';
-    humids.forEach((v,i)=>{i===0?ctx.moveTo(scaleX(i),scaleY(v)):ctx.lineTo(scaleX(i),scaleY(v));});
-    ctx.stroke();ctx.setLineDash([]);
+
+  // Humidity line smooth dashed.
+  if(humPts.length){
+    ctx.save();
+    ctx.shadowColor='rgba(63,185,80,.25)';
+    ctx.shadowBlur=8;
+    ctx.setLineDash([7,5]);
+    makeSmoothPath(ctx,humPts);
+    ctx.strokeStyle=green;
+    ctx.lineWidth=2.2;
+    ctx.lineCap='round';
+    ctx.lineJoin='round';
+    ctx.stroke();
+    ctx.restore();
   }
-  // Legend
-  ctx.fillStyle='#58a6ff';ctx.fillRect(pad.l,6,12,4);
-  ctx.fillStyle='#8b949e';ctx.font='10px JetBrains Mono';ctx.textAlign='left';ctx.fillText('Suhu (°C)',pad.l+16,11);
-  ctx.strokeStyle='#3fb950';ctx.setLineDash([4,3]);ctx.beginPath();ctx.moveTo(pad.l+80,8);ctx.lineTo(pad.l+92,8);ctx.stroke();ctx.setLineDash([]);
-  ctx.fillStyle='#8b949e';ctx.fillText('Humidity (%)',pad.l+96,11);
+
+  // Titik terakhir + label live.
+  const last=tempPts[tempPts.length-1];
+  if(last){
+    ctx.beginPath();
+    ctx.arc(last.x,last.y,4.5,0,Math.PI*2);
+    ctx.fillStyle=accent;
+    ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,.75)';
+    ctx.lineWidth=2;
+    ctx.stroke();
+
+    const label=`${temps[temps.length-1].toFixed(1)}°C`;
+    ctx.font='11px JetBrains Mono';
+    const tw=ctx.measureText(label).width+14;
+    let lx=Math.min(W-tw-8,last.x+10), ly=Math.max(8,last.y-22);
+    roundedRect(ctx,lx,ly,tw,22,7);
+    ctx.fillStyle='rgba(13,17,23,.78)';ctx.fill();
+    ctx.fillStyle=accent;ctx.textAlign='left';ctx.fillText(label,lx+7,ly+15);
+  }
+
+  // Legend.
+  ctx.fillStyle=accent;roundedRect(ctx,pad.l,8,18,5,3);ctx.fill();
+  ctx.fillStyle=text2;ctx.font='10px JetBrains Mono';ctx.textAlign='left';ctx.fillText('Suhu (°C)',pad.l+24,14);
+  ctx.strokeStyle=green;ctx.lineWidth=2;ctx.setLineDash([7,5]);ctx.beginPath();ctx.moveTo(pad.l+96,11);ctx.lineTo(pad.l+116,11);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle=text2;ctx.fillText('Humidity (%)',pad.l+122,14);
+}
+
+// Kompatibilitas: fungsi lama tetap ada, tapi sekarang update tidak reset chart.
+function drawChart(labels,temps,humids=[]){
+  setChartData(labels,temps,humids,chartState.current.temps.length===0);
 }
 
 function updateChart(devId){
@@ -1196,7 +1440,7 @@ function updateChart(devId){
   const labels=hist.map(h=>h.t);
   const temps=hist.map(h=>h.v);
   const humids=hist.map(h=>h.h);
-  drawChart(labels,temps,humids);
+  setChartData(labels,temps,humids,false);
   const d=devices[devId];
   document.getElementById('chart-title').textContent=(d?.name||devId)+' — Suhu & Humidity';
   document.getElementById('chart-last').textContent=hist.length?`T:${hist[hist.length-1].v}°C H:${hist[hist.length-1].h}%`:'—';
@@ -1204,8 +1448,13 @@ function updateChart(devId){
 
 function switchChartDevice(id){
   chartDeviceId=id;
-  if(id) updateChart(id);
-  else drawChart([],[]);
+  const sel=document.getElementById('chart-device-select');
+  if(sel) setTimeout(()=>sel.blur(),80);
+  if(id){
+    requestAnimationFrame(()=>updateChart(id));
+  } else {
+    setChartData([],[],[],true);
+  }
 }
 
 // ---- SENSOR SIMULATOR ----
