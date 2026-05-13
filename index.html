@@ -131,17 +131,20 @@ canvas.chart{width:100%!important;height:260px!important}
 
 /* SIMULATOR */
 .sim-panel{background:linear-gradient(135deg,rgba(88,166,255,.10),rgba(63,185,80,.07));border:1px solid var(--border);border-radius:12px;padding:1rem;margin-bottom:1rem}
+.sim-panel.in-modal{margin-bottom:0}
 .sim-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:.9rem}
 .sim-title{font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px}
 .sim-sub{font-size:12px;color:var(--text2);margin-top:3px}
 .sim-status{font-size:10px;font-weight:700;font-family:var(--mono);padding:3px 8px;border-radius:99px;background:rgba(72,79,88,.35);color:var(--text2);white-space:nowrap}
 .sim-status.on{background:rgba(63,185,80,.15);color:var(--accent2)}
-.sim-grid{display:grid;grid-template-columns:1.1fr repeat(3,.7fr) auto auto;gap:8px;align-items:end}
+.sim-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;align-items:end}
+.sim-grid .sim-wide{grid-column:span 2}
+@media(max-width:560px){.sim-grid .sim-wide{grid-column:span 1}}
 .sim-reading-grid{display:grid;grid-template-columns:repeat(3,minmax(90px,1fr));gap:8px;margin-top:.9rem}
 .sim-reading{background:var(--bg2);border:1px solid var(--border);border-radius:9px;padding:.7rem;text-align:center}
 .sim-reading .val{font-size:20px;font-weight:800;font-family:var(--mono)}
 .sim-reading .key{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
-@media(max-width:800px){.sim-grid{grid-template-columns:1fr 1fr}.sim-grid .btn-primary,.sim-grid .btn-cancel{grid-column:auto}.sim-head{flex-direction:column}.sim-reading-grid{grid-template-columns:1fr 1fr 1fr}}
+@media(max-width:800px){.sim-head{flex-direction:column}.sim-reading-grid{grid-template-columns:1fr 1fr 1fr}}
 
 /* CONTROL */
 .ctrl-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1.1rem;margin-bottom:.8rem}
@@ -346,36 +349,18 @@ canvas.chart{width:100%!important;height:260px!important}
 
     <!-- DASHBOARD -->
     <div class="page active" id="page-dashboard">
-      <div class="page-header"><div class="page-header-text"><h1>Dashboard</h1><p id="last-update">Memuat data...</p></div></div>
+      <div class="page-header">
+        <div class="page-header-text"><h1>Dashboard</h1><p id="last-update">Memuat data...</p></div>
+        <div class="page-actions">
+          <button class="sec-btn" onclick="openSimulatorModal()"><i class="ti ti-wave-sine" style="font-size:12px"></i> Simulasi <span class="sim-status" id="sim-status-mini" style="margin-left:4px">OFF</span></button>
+        </div>
+      </div>
       <div class="stat-grid">
         <div class="stat-card c-blue"><div class="stat-label">Total Device</div><div class="stat-val blue" id="s-total">—</div><div class="stat-sub">terdaftar</div></div>
         <div class="stat-card c-green"><div class="stat-label">Online</div><div class="stat-val green" id="s-online">—</div><div class="stat-sub">aktif</div></div>
         <div class="stat-card c-red"><div class="stat-label">Offline</div><div class="stat-val red" id="s-offline">—</div><div class="stat-sub">tidak merespons</div></div>
         <div class="stat-card c-purple"><div class="stat-label">Avg Suhu</div><div class="stat-val purple" id="s-temp">—</div><div class="stat-sub">semua sensor</div></div>
         <div class="stat-card c-cyan"><div class="stat-label">GPS Tracker</div><div class="stat-val cyan" id="s-gps">—</div><div class="stat-sub">aktif</div></div>
-      </div>
-
-      <div class="sim-panel">
-        <div class="sim-head">
-          <div>
-            <div class="sim-title"><i class="ti ti-wave-sine" style="color:var(--accent)"></i> Simulasi Suhu & Humidity</div>
-            <div class="sim-sub">Tes grafik dashboard tanpa ESP fisik. Data simulator dikirim via WebSocket seperti sensor asli.</div>
-          </div>
-          <span class="sim-status" id="sim-status">SIM OFF</span>
-        </div>
-        <div class="sim-grid">
-          <div><label class="form-label">Device ID Simulasi</label><input class="form-input" id="sim-device-id" value="sim-sensor-01"></div>
-          <div><label class="form-label">Suhu Base</label><input type="number" class="form-input" id="sim-temp-base" value="29" step="0.1"></div>
-          <div><label class="form-label">Humid Base</label><input type="number" class="form-input" id="sim-humid-base" value="62" step="0.1"></div>
-          <div><label class="form-label">Interval</label><input type="number" class="form-input" id="sim-interval" value="2" min="1" max="60" step="1"></div>
-          <button class="btn-primary" id="btn-sim-start" onclick="startSimulator()" style="padding:9px 14px;white-space:nowrap"><i class="ti ti-player-play"></i> Mulai</button>
-          <button class="btn-cancel" id="btn-sim-stop" onclick="stopSimulator()" style="padding:9px 14px;white-space:nowrap"><i class="ti ti-player-stop"></i> Stop</button>
-        </div>
-        <div class="sim-reading-grid">
-          <div class="sim-reading"><div class="val" id="sim-temp-val">—</div><div class="key">Suhu °C</div></div>
-          <div class="sim-reading"><div class="val" id="sim-humid-val">—</div><div class="key">Humidity %</div></div>
-          <div class="sim-reading"><div class="val" id="sim-rssi-val">—</div><div class="key">RSSI dBm</div></div>
-        </div>
       </div>
 
       <div class="sec-title"><span>Grafik Suhu & Humidity Real-time</span>
@@ -776,6 +761,35 @@ canvas.chart{width:100%!important;height:260px!important}
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeModal('modal-geo')">Batal</button>
       <button class="btn-primary" onclick="addGeofence()">Tambah Zona</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Simulator Suhu & Humidity -->
+<div class="modal-bg" id="modal-simulator">
+  <div class="modal" style="width:560px">
+    <div class="modal-title"><span><i class="ti ti-wave-sine" style="color:var(--accent)"></i> Simulasi Suhu & Humidity</span><button class="modal-close" onclick="closeModal('modal-simulator')">&times;</button></div>
+    <div class="sim-panel in-modal">
+      <div class="sim-head">
+        <div>
+          <div class="sim-title"><i class="ti ti-device-desktop-analytics" style="color:var(--accent)"></i> Simulator Sensor</div>
+          <div class="sim-sub">Tes grafik dashboard tanpa ESP fisik. Data simulator dikirim via WebSocket seperti sensor asli.</div>
+        </div>
+        <span class="sim-status" id="sim-status">SIM OFF</span>
+      </div>
+      <div class="sim-grid">
+        <div class="sim-wide"><label class="form-label">Device ID Simulasi</label><input class="form-input" id="sim-device-id" value="sim-sensor-01"></div>
+        <div><label class="form-label">Suhu Base</label><input type="number" class="form-input" id="sim-temp-base" value="29" step="0.1"></div>
+        <div><label class="form-label">Humid Base</label><input type="number" class="form-input" id="sim-humid-base" value="62" step="0.1"></div>
+        <div><label class="form-label">Interval (detik)</label><input type="number" class="form-input" id="sim-interval" value="2" min="1" max="60" step="1"></div>
+        <button class="btn-primary" id="btn-sim-start" onclick="startSimulator()" style="padding:9px 14px;white-space:nowrap"><i class="ti ti-player-play"></i> Mulai</button>
+        <button class="btn-cancel" id="btn-sim-stop" onclick="stopSimulator()" style="padding:9px 14px;white-space:nowrap"><i class="ti ti-player-stop"></i> Stop</button>
+      </div>
+      <div class="sim-reading-grid">
+        <div class="sim-reading"><div class="val" id="sim-temp-val">—</div><div class="key">Suhu °C</div></div>
+        <div class="sim-reading"><div class="val" id="sim-humid-val">—</div><div class="key">Humidity %</div></div>
+        <div class="sim-reading"><div class="val" id="sim-rssi-val">—</div><div class="key">RSSI dBm</div></div>
+      </div>
     </div>
   </div>
 </div>
@@ -1200,11 +1214,16 @@ function setSimulatorStatus(on){
   const el=document.getElementById('sim-status');
   if(el){
     el.textContent=on?'SIM ON':'SIM OFF';
-    el.classList.toggle('on', on);
+    el.classList.toggle('on', !!on);
+  }
+  const mini=document.getElementById('sim-status-mini');
+  if(mini){
+    mini.textContent=on?'ON':'OFF';
+    mini.classList.toggle('on', !!on);
   }
   const start=document.getElementById('btn-sim-start');
   const stop=document.getElementById('btn-sim-stop');
-  if(start) start.disabled=on || !isAdmin();
+  if(start) start.disabled=!!on || !isAdmin();
   if(stop) stop.disabled=!on || !isAdmin();
 }
 
@@ -1615,6 +1634,11 @@ async function savePins(){
 // ---- DEVICE ----
 function openAddModal(){if(!isAdmin())return;document.getElementById('modal-add').classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
+function openSimulatorModal(){
+  const m=document.getElementById('modal-simulator');
+  if(m) m.classList.add('open');
+  loadSimulatorStatus();
+}
 function selType(el){document.querySelectorAll('.type-opt').forEach(o=>o.classList.remove('sel'));el.classList.add('sel');selTypeVal=el.dataset.t;}
 async function addDeviceLocal(){
   if(!isAdmin()) return;
