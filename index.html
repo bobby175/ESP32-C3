@@ -818,6 +818,9 @@ let chartCtx=null, chartInstance=null, chartDeviceId=null;
 let gpsMap=null, gpsMarkers={}, gpsTrails={}, gpsTrailEnabled=true;
 let currentGPSDevice=null, currentPinDevice=null;
 let tempHistory={};
+const MAX_TEMP_HISTORY = 240;
+let sensorHistoryLoaded = {};
+let sensorHistoryLoading = {};
 let simulatorRunning=false, simulatorDeviceId='sim-sensor-01';
 
 const typeIcons  = {sensor:'ti-temperature',relay:'ti-bolt',servo:'ti-rotate',display:'ti-device-desktop',motor:'ti-engine',gps_tracker:'ti-map-pin',custom:'ti-puzzle'};
@@ -930,7 +933,7 @@ async function doLogout() {
   sessionStorage.removeItem('esp32_active_page');
   if(ws) ws.close();
   clearInterval(pollInterval);
-  devices={}; devicePins={}; tempHistory={};
+  devices={}; devicePins={}; tempHistory={}; sensorHistoryLoaded={}; sensorHistoryLoading={};
   document.getElementById('main-app').style.display='none';
   document.getElementById('login-screen').style.display='flex';
   document.getElementById('inp-pass').value='';
@@ -960,6 +963,70 @@ function applyRoleUI() {
   if(simStop) simStop.disabled=!isAdmin();
 }
 
+// ---- SENSOR HISTORY PERSISTENCE ----
+function makeTempPoint(row, fallbackTime){
+  if(!row) return null;
+  const tv=parseFloat(row.temp);
+  const hv=parseFloat(row.humidity);
+  if(isNaN(tv)) return null;
+  const rawTime=row.time||row.timestamp||fallbackTime||new Date().toISOString();
+  const dt=new Date(rawTime);
+  const iso=isNaN(dt.getTime()) ? String(rawTime) : dt.toISOString();
+  const label=isNaN(dt.getTime()) ? new Date().toLocaleTimeString('id-ID') : dt.toLocaleTimeString('id-ID');
+  return {t:label, v:tv, h:isNaN(hv)?0:hv, ts:iso};
+}
+
+function compactTempHistory(devId){
+  const hist=tempHistory[devId]||[];
+  const seen=new Set();
+  const out=[];
+  for(const p of hist){
+    if(!p || isNaN(parseFloat(p.v))) continue;
+    const key=p.ts || `${p.t}:${p.v}:${p.h}`;
+    if(seen.has(key)) continue;
+    seen.add(key);
+    out.push(p);
+  }
+  out.sort((a,b)=>String(a.ts||a.t).localeCompare(String(b.ts||b.t)));
+  tempHistory[devId]=out.slice(-MAX_TEMP_HISTORY);
+}
+
+function appendTempPoint(devId, row, fallbackTime){
+  const p=makeTempPoint(row, fallbackTime);
+  if(!p) return false;
+  if(!tempHistory[devId]) tempHistory[devId]=[];
+  const hist=tempHistory[devId];
+  const last=hist[hist.length-1];
+  // Hindari titik dobel dari polling + websocket.
+  if(last && (last.ts===p.ts || (last.v===p.v && last.h===p.h && last.t===p.t))) return false;
+  hist.push(p);
+  if(hist.length>MAX_TEMP_HISTORY) hist.splice(0, hist.length-MAX_TEMP_HISTORY);
+  return true;
+}
+
+async function loadSensorHistory(devId, force=false){
+  if(!devId) return;
+  if(sensorHistoryLoading[devId]) return sensorHistoryLoading[devId];
+  if(sensorHistoryLoaded[devId] && !force) return;
+  sensorHistoryLoading[devId]=(async()=>{
+    try{
+      const hist=await apiFetch('/api/devices/'+encodeURIComponent(devId)+'/history?limit='+MAX_TEMP_HISTORY);
+      if(Array.isArray(hist) && hist.length){
+        const existing=tempHistory[devId]||[];
+        tempHistory[devId]=hist.map(r=>makeTempPoint(r)).filter(Boolean).concat(existing);
+        compactTempHistory(devId);
+      }
+      sensorHistoryLoaded[devId]=true;
+      if(chartDeviceId===devId && chartCtx) updateChart(devId);
+    }catch(e){
+      addLog('System','Gagal load history grafik: '+e.message,'warn');
+    }finally{
+      delete sensorHistoryLoading[devId];
+    }
+  })();
+  return sensorHistoryLoading[devId];
+}
+
 // ---- WEBSOCKET ----
 function connectWS() {
   const wsUrl=BASE_URL.replace('https://','wss://').replace('http://','ws://')+'/ws?token='+token;
@@ -977,6 +1044,7 @@ function connectWS() {
           chartDeviceId=withTemp[0].device_id;
           const cs=document.getElementById('chart-device-select');
           if(cs) cs.value=chartDeviceId;
+          loadSensorHistory(chartDeviceId);
         }
       }
       else if(['sensor','status','gps'].includes(msg.type)){
@@ -988,14 +1056,13 @@ function connectWS() {
           // parseFloat agar string "27.3" jadi angka 27.3
           const tv=parseFloat(d.temp), hv=parseFloat(d.humidity);
           if(!isNaN(tv)){
-            if(!tempHistory[id]) tempHistory[id]=[];
-            tempHistory[id].push({t:new Date().toLocaleTimeString('id-ID'),v:tv,h:isNaN(hv)?0:hv});
-            if(tempHistory[id].length>60) tempHistory[id].shift();
+            appendTempPoint(id, d, msg.timestamp);
             // Auto set chart device jika belum dipilih
             if(!chartDeviceId){
               chartDeviceId=id;
               const cs=document.getElementById('chart-device-select');
               if(cs) cs.value=id;
+              loadSensorHistory(id);
             }
             // Update chart jika ini device yang sedang dipilih
             if(chartDeviceId===id && chartCtx) updateChart(id);
@@ -1039,7 +1106,7 @@ function connectWS() {
       // Handle hapus device dari browser lain
       if(msg.type==='device_deleted'){
         const did=msg.device_id;
-        delete devices[did]; delete devicePins[did]; delete tempHistory[did];
+        delete devices[did]; delete devicePins[did]; delete tempHistory[did]; delete sensorHistoryLoaded[did]; delete sensorHistoryLoading[did];
         if(chartDeviceId===did){ chartDeviceId=null; drawChart([],[]); }
         addLog(did,'Device dihapus oleh admin','warn');
       }
@@ -1068,26 +1135,20 @@ async function fetchDevices() {
     list.forEach(d=>{
       if(!d.device_id) return;
       devices[d.device_id]=d;
-      // Isi tempHistory dari poll data jika WebSocket belum kirim data
-      const tv=parseFloat(d.temp), hv=parseFloat(d.humidity);
-      if(!isNaN(tv)){
-        if(!tempHistory[d.device_id]) tempHistory[d.device_id]=[];
-        // Jangan dobel push jika sudah ada data dari WS
-        const hist=tempHistory[d.device_id];
-        const lastEntry=hist[hist.length-1];
-        const nowStr=new Date().toLocaleTimeString('id-ID');
-        if(!lastEntry||lastEntry.v!==tv){
-          hist.push({t:nowStr,v:tv,h:isNaN(hv)?0:hv});
-          if(hist.length>60) hist.shift();
-        }
-      }
+      // Isi tempHistory dari poll data jika WebSocket belum kirim data.
+      // Data lama tetap dimuat dari /history agar grafik tidak hilang setelah refresh browser.
+      const tv=parseFloat(d.temp);
+      if(!isNaN(tv)) appendTempPoint(d.device_id, d, d.last_seen || new Date().toISOString());
     });
     const stats=await apiFetch('/api/stats');
     if(!stats) return;
     updateStats(stats);
     renderAll();
-    // Refresh chart setelah poll
-    if(chartDeviceId && chartCtx) updateChart(chartDeviceId);
+    // Refresh chart setelah poll + muat riwayat tersimpan dari backend.
+    if(chartDeviceId && chartCtx){
+      loadSensorHistory(chartDeviceId);
+      updateChart(chartDeviceId);
+    }
     const now=new Date().toLocaleTimeString('id-ID');
     document.getElementById('last-update').textContent='Update: '+now;
     document.getElementById('sf-update').textContent='sync: '+now;
@@ -1148,7 +1209,10 @@ function updateDeviceSelects(){
   if(!chartDeviceId && withTemp.length){
     chartDeviceId=withTemp[0].device_id;
     if(cs) cs.value=chartDeviceId||'';
-    if(chartDeviceId && chartCtx) updateChart(chartDeviceId);
+    if(chartDeviceId && chartCtx){
+      loadSensorHistory(chartDeviceId);
+      updateChart(chartDeviceId);
+    }
   }
 
   const gs=document.getElementById('gps-device-select');
@@ -1452,6 +1516,7 @@ function switchChartDevice(id){
   if(sel) setTimeout(()=>sel.blur(),80);
   if(id){
     requestAnimationFrame(()=>updateChart(id));
+    loadSensorHistory(id, true);
   } else {
     setChartData([],[],[],true);
   }
@@ -1915,7 +1980,7 @@ async function removeDevice(id){
   if(!confirm('Hapus device "'+name+'" secara permanen dari server?\n\nPerhatian: device akan muncul kembali jika ESP32 reconnect dengan DEVICE_ID yang sama.')) return;
   try{
     await apiFetch('/api/devices/'+id,{method:'DELETE'});
-    delete devices[id]; delete devicePins[id]; delete tempHistory[id];
+    delete devices[id]; delete devicePins[id]; delete tempHistory[id]; delete sensorHistoryLoaded[id]; delete sensorHistoryLoading[id];
     renderAll(); updateDeviceSelects();
     addLog(id,'Device dihapus dari server','warn');
     if(chartDeviceId===id){ chartDeviceId=null; drawChart([],[]); }
