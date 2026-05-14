@@ -1,4 +1,4 @@
-const CACHE_NAME = 'esp32-hub-v14-pwa';
+const CACHE_NAME = 'esp32-hub-v15-mobile-scroll-map-fix';
 const APP_SHELL = [
   '/index.html',
   '/manifest.webmanifest',
