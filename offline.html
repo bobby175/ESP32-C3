@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0d1117">
+<title>ESP32 Hub Offline</title>
+<style>
+  *{box-sizing:border-box}body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0d1117;color:#e6edf3;font-family:system-ui,-apple-system,Segoe UI,sans-serif;padding:24px}.box{max-width:420px;background:#161b22;border:1px solid #30363d;border-radius:18px;padding:28px;text-align:center;box-shadow:0 14px 40px rgba(0,0,0,.35)}.icon{width:64px;height:64px;border-radius:18px;background:#58a6ff;color:#0d1117;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:26px}h1{font-size:22px;margin:0 0 8px}p{color:#8b949e;line-height:1.55;margin:0 0 18px}button{border:0;background:#58a6ff;color:#0d1117;border-radius:10px;padding:11px 16px;font-weight:800;cursor:pointer}
+</style>
+</head>
+<body>
+  <div class="box">
+    <div class="icon">ESP</div>
+    <h1>Dashboard sedang offline</h1>
+    <p>Aplikasi sudah tersimpan di perangkat, tetapi koneksi ke server/MQTT belum tersedia. Cek internet atau server Railway Anda.</p>
+    <button onclick="location.reload()">Coba Lagi</button>
+  </div>
+</body>
+</html>
