@@ -1,4 +1,4 @@
-const CACHE_NAME = 'esp32-hub-v15-mobile-scroll-map-fix';
+const CACHE_NAME = 'esp32-hub-v18-phone-gps-sim';
 const APP_SHELL = [
   '/index.html',
   '/manifest.webmanifest',
