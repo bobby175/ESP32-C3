@@ -211,7 +211,7 @@ canvas.chart{width:100%!important;height:280px!important;display:block;transitio
 .chart-select-wrap{position:relative;display:inline-flex;align-items:center;gap:6px}
 .chart-select-wrap .tracker-select{min-width:150px}
 @media (max-width:640px){
-  html,body{overscroll-behavior-y:none}
+  html,body{overscroll-behavior-y:auto;-webkit-overflow-scrolling:touch}
   .chart-wrap{min-height:335px;touch-action:pan-y}
   canvas.chart{height:280px!important;touch-action:pan-y!important;pointer-events:none!important}
   #chart-device-select{font-size:16px!important;min-width:160px;max-width:54vw}
@@ -327,6 +327,31 @@ canvas.chart{width:100%!important;height:280px!important;display:block;transitio
 /* GEOFENCE on map */
 .geofence-circle{ stroke:var(--cyan); fill:rgba(57,211,83,.08); }
 
+
+
+/* MOBILE Z-INDEX FIX: Leaflet map must stay behind sidebar/topbar */
+.topbar{z-index:6000!important}
+.sidebar-overlay{z-index:5900!important}
+.sidebar{z-index:6100!important}
+.modal-bg{z-index:7000!important}
+.toast-container{z-index:8000!important}
+.map-shell{position:relative;z-index:0;isolation:isolate;contain:paint}
+#gps-map{position:relative;z-index:0!important}
+#gps-map .leaflet-container,
+#gps-map .leaflet-pane,
+#gps-map .leaflet-top,
+#gps-map .leaflet-bottom,
+#gps-map .leaflet-control,
+#gps-map .leaflet-marker-pane,
+#gps-map .leaflet-popup-pane,
+#gps-map .leaflet-tooltip-pane{z-index:auto!important}
+#gps-map .leaflet-control-container{position:relative;z-index:30!important}
+.map-touch-guard{z-index:40!important}
+body.sidebar-open .map-shell,
+body.sidebar-open #gps-map,
+body.sidebar-open .map-touch-guard{pointer-events:none!important}
+body.sidebar-open .leaflet-control-container{display:none!important}
+
 /* Card style used in alerts */
 .card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1rem;margin-bottom:.6rem}
 </style>
@@ -359,7 +384,7 @@ canvas.chart{width:100%!important;height:280px!important;display:block;transitio
   <div class="login-box">
     <div class="login-logo">
       <div class="icon"><i class="ti ti-cpu"></i></div>
-      <div class="text"><div class="name">ESP32 <span style="color:var(--accent)">Hub</span></div><div class="sub">IoT Control Center v14 PWA</div></div>
+      <div class="text"><div class="name">ESP32 <span style="color:var(--accent)">Hub</span></div><div class="sub">IoT Control Center v16 PWA</div></div>
     </div>
     <div class="login-field"><label>Username</label><input type="text" id="inp-user" placeholder="admin" autocomplete="username"></div>
     <div class="login-field"><label>Password</label><input type="password" id="inp-pass" placeholder="••••••••" autocomplete="current-password"></div>
@@ -383,6 +408,7 @@ canvas.chart{width:100%!important;height:280px!important;display:block;transitio
       <button class="pwa-install-btn" id="pwa-install-btn" onclick="installPWA()"><i class="ti ti-download" style="font-size:14px"></i><span>Install</span></button>
       <button class="logout-btn" onclick="toggleLang()" title="Bahasa" id="lang-btn" style="font-size:11px;width:auto;padding:0 8px">ID</button>
       <button class="logout-btn" onclick="toggleTheme()" title="Theme" id="theme-btn"><i class="ti ti-moon" style="font-size:15px"></i></button>
+      <button class="logout-btn" onclick="hardRefreshApp()" title="Refresh" id="refresh-btn"><i class="ti ti-refresh" style="font-size:15px"></i></button>
       <button class="logout-btn" onclick="doLogout()" title="Logout"><i class="ti ti-logout" style="font-size:15px"></i></button>
     </div>
   </div>
@@ -472,6 +498,7 @@ canvas.chart{width:100%!important;height:280px!important;display:block;transitio
           </select>
           <button class="sec-btn" onclick="centerMap()"><i class="ti ti-focus-2" style="font-size:12px"></i>Center</button>
           <button class="sec-btn" onclick="toggleGPSTrail()"><i class="ti ti-route" style="font-size:12px"></i><span id="trail-btn-txt">Trail ON</span></button>
+          <button class="sec-btn" onclick="openPhoneGPSModal()"><i class="ti ti-device-mobile-pin" style="font-size:12px;color:var(--cyan)"></i> GPS HP <span class="sim-status" id="phone-gps-mini" style="margin-left:4px">OFF</span></button>
         </div>
       </div>
       <div class="gps-info-grid">
@@ -870,6 +897,36 @@ canvas.chart{width:100%!important;height:280px!important;display:block;transitio
   </div>
 </div>
 
+<!-- Modal GPS HP -->
+<div class="modal-bg" id="modal-phone-gps">
+  <div class="modal" style="width:560px">
+    <div class="modal-title"><span><i class="ti ti-device-mobile-pin" style="color:var(--cyan)"></i> Simulasi GPS dari HP</span><button class="modal-close" onclick="closeModal('modal-phone-gps')">&times;</button></div>
+    <div class="sim-panel in-modal">
+      <div class="sim-head">
+        <div>
+          <div class="sim-title"><i class="ti ti-map-2" style="color:var(--cyan)"></i> Phone GPS Tracker</div>
+          <div class="sim-sub">HP ini akan menjadi tracker GPS virtual. Izinkan lokasi browser, lalu data dikirim ke backend seperti ESP GPS asli.</div>
+        </div>
+        <span class="sim-status" id="phone-gps-status">GPS OFF</span>
+      </div>
+      <div class="sim-grid">
+        <div class="sim-wide"><label class="form-label">Device ID GPS HP</label><input class="form-input" id="phone-gps-device-id" value="phone-gps-01"></div>
+        <div class="sim-wide"><label class="form-label">Nama Tracker</label><input class="form-input" id="phone-gps-name" value="GPS HP Saya"></div>
+        <div><label class="form-label">Interval kirim (detik)</label><input type="number" class="form-input" id="phone-gps-interval" value="3" min="1" max="60" step="1"></div>
+        <div><label class="form-label">Akurasi tinggi</label><select class="form-select" id="phone-gps-highacc"><option value="1">Aktif</option><option value="0">Hemat baterai</option></select></div>
+        <button class="btn-primary" onclick="startPhoneGPS()" style="padding:9px 14px;white-space:nowrap"><i class="ti ti-player-play"></i> Mulai</button>
+        <button class="btn-cancel" onclick="stopPhoneGPS()" style="padding:9px 14px;white-space:nowrap"><i class="ti ti-player-stop"></i> Stop</button>
+      </div>
+      <div class="sim-reading-grid">
+        <div class="sim-reading"><div class="val" id="phone-gps-lat-val">—</div><div class="key">Latitude</div></div>
+        <div class="sim-reading"><div class="val" id="phone-gps-lng-val">—</div><div class="key">Longitude</div></div>
+        <div class="sim-reading"><div class="val" id="phone-gps-acc-val">—</div><div class="key">Akurasi m</div></div>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-top:.8rem;line-height:1.5">Catatan: fitur ini butuh HTTPS dan izin lokasi browser. Di PWA/Chrome HP, pilih “Allow location”.</div>
+    </div>
+  </div>
+</div>
+
 <script>
 // ============================================================
 let BASE_URL = localStorage.getItem('esp32_server') || 'https://projectbelajar-production.up.railway.app';
@@ -886,6 +943,7 @@ const MAX_TEMP_HISTORY = 240;
 let sensorHistoryLoaded = {};
 let sensorHistoryLoading = {};
 let simulatorRunning=false, simulatorDeviceId='sim-sensor-01';
+let phoneGPSWatchId=null, phoneGPSActive=false, phoneGPSLastSent=0, phoneGPSDeviceId='phone-gps-01';
 
 const typeIcons  = {sensor:'ti-temperature',relay:'ti-bolt',servo:'ti-rotate',display:'ti-device-desktop',motor:'ti-engine',gps_tracker:'ti-map-pin',custom:'ti-puzzle'};
 const typeColors = {sensor:'#58a6ff',relay:'#d29922',servo:'#bc8cff',display:'#3fb950',motor:'#3fb950',gps_tracker:'#39d353',custom:'#8b949e'};
@@ -934,11 +992,13 @@ function toggleSidebar() {
   const sb=document.getElementById('sidebar'),ov=document.getElementById('sidebar-overlay'),hb=document.getElementById('hamburger');
   const open=sb.classList.toggle('open');
   ov.classList.toggle('open',open);hb.classList.toggle('open',open);
+  document.body.classList.toggle('sidebar-open', open);
 }
 function closeSidebar() {
   document.getElementById('sidebar').classList.remove('open');
   document.getElementById('sidebar-overlay').classList.remove('open');
   document.getElementById('hamburger').classList.remove('open');
+  document.body.classList.remove('sidebar-open');
 }
 
 // ---- AUTH ----
@@ -1666,6 +1726,95 @@ async function stopSimulator(){
   }catch(e){ showToast('Gagal stop simulator: '+e.message,'error'); }
 }
 
+
+// ---- PHONE GPS SIMULATOR ----
+function openPhoneGPSModal(){
+  document.getElementById('modal-phone-gps').classList.add('open');
+}
+
+function setPhoneGPSStatus(on, text){
+  phoneGPSActive=!!on;
+  const label=text || (on ? 'GPS ON' : 'GPS OFF');
+  const el=document.getElementById('phone-gps-status');
+  if(el){ el.textContent=label; el.classList.toggle('on', !!on); }
+  const mini=document.getElementById('phone-gps-mini');
+  if(mini){ mini.textContent=on?'ON':'OFF'; mini.classList.toggle('on', !!on); }
+}
+
+function updatePhoneGPSReadings(lat,lng,acc){
+  const a=document.getElementById('phone-gps-lat-val'); if(a) a.textContent=Number(lat).toFixed(6);
+  const b=document.getElementById('phone-gps-lng-val'); if(b) b.textContent=Number(lng).toFixed(6);
+  const c=document.getElementById('phone-gps-acc-val'); if(c) c.textContent=Number.isFinite(Number(acc)) ? Math.round(Number(acc))+'m' : '—';
+}
+
+async function pushPhoneGPSPosition(pos, force=false){
+  const now=Date.now();
+  const interval=Math.max(1, Math.min(60, parseInt(document.getElementById('phone-gps-interval')?.value||'3'))) * 1000;
+  if(!force && now-phoneGPSLastSent < interval) return;
+  phoneGPSLastSent=now;
+  const c=pos.coords;
+  const deviceId=(document.getElementById('phone-gps-device-id')?.value||'phone-gps-01').trim() || 'phone-gps-01';
+  const name=(document.getElementById('phone-gps-name')?.value||'GPS HP Saya').trim() || 'GPS HP Saya';
+  phoneGPSDeviceId=deviceId;
+  const payload={
+    device_id: deviceId,
+    name,
+    lat: c.latitude,
+    lng: c.longitude,
+    speed: c.speed!=null && !Number.isNaN(c.speed) ? Math.max(0, c.speed*3.6) : 0,
+    altitude: c.altitude!=null && !Number.isNaN(c.altitude) ? c.altitude : 0,
+    accuracy: c.accuracy,
+    heading: c.heading,
+    time: new Date(pos.timestamp||Date.now()).toISOString()
+  };
+  updatePhoneGPSReadings(payload.lat,payload.lng,payload.accuracy);
+  try{
+    const res=await apiFetch('/api/simulator/gps/push',{method:'POST',body:payload});
+    devices[deviceId]={...(devices[deviceId]||{}),...(res.device||{}),...payload,device_id:deviceId,name,device_type:'gps_tracker',type:'gps_tracker',online:true,simulated:true};
+    updateDeviceSelects();
+    if(!currentGPSDevice || currentGPSDevice===deviceId){
+      currentGPSDevice=deviceId;
+      const sel=document.getElementById('gps-device-select'); if(sel) sel.value=deviceId;
+      updateGPSDisplay(deviceId, devices[deviceId]);
+    }
+    setPhoneGPSStatus(true,'GPS ON');
+  }catch(e){
+    addLog('GPS HP','Gagal kirim lokasi: '+e.message,'error');
+    showToast('Gagal kirim GPS HP: '+e.message,'error',2500);
+  }
+}
+
+function startPhoneGPS(){
+  if(!isAdmin()){ showToast('GPS HP hanya bisa dijalankan admin','warn'); return; }
+  if(!navigator.geolocation){ showToast('Browser tidak mendukung GPS lokasi','error'); return; }
+  const highAcc=(document.getElementById('phone-gps-highacc')?.value||'1')==='1';
+  const opts={enableHighAccuracy: highAcc, maximumAge: 1000, timeout: 15000};
+  if(phoneGPSWatchId!==null){ navigator.geolocation.clearWatch(phoneGPSWatchId); phoneGPSWatchId=null; }
+  setPhoneGPSStatus(true,'MENCARI...');
+  showToast('Meminta izin lokasi HP...','info',2500);
+  phoneGPSWatchId=navigator.geolocation.watchPosition(
+    pos=>pushPhoneGPSPosition(pos, false),
+    err=>{
+      const msg=err.code===1?'Izin lokasi ditolak':err.code===2?'Lokasi tidak tersedia':'Timeout mencari lokasi';
+      setPhoneGPSStatus(false,'GPS ERROR');
+      showToast(msg,'error');
+      addLog('GPS HP',msg,'error');
+    },
+    opts
+  );
+  // Ambil satu titik cepat supaya user langsung lihat hasil kalau tersedia.
+  navigator.geolocation.getCurrentPosition(pos=>pushPhoneGPSPosition(pos,true),()=>{},opts);
+}
+
+async function stopPhoneGPS(){
+  if(phoneGPSWatchId!==null){ navigator.geolocation.clearWatch(phoneGPSWatchId); phoneGPSWatchId=null; }
+  setPhoneGPSStatus(false,'GPS OFF');
+  try{
+    await apiFetch('/api/simulator/gps/stop',{method:'POST',body:{device_id:phoneGPSDeviceId}});
+  }catch(e){}
+  showToast('GPS HP dihentikan','warn');
+}
+
 // ---- MAP / GPS ----
 function isMobileMapDevice(){
   return window.matchMedia('(max-width: 768px)').matches || ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
@@ -2197,6 +2346,19 @@ function changeServer(){
   document.getElementById('set-url').textContent=url;
   document.getElementById('sf-url').textContent='backend: '+url.replace('https://','');
   addLog('System','Server: '+url,'info');
+}
+
+async function hardRefreshApp(){
+  // Tombol refresh manual untuk HP/PWA. Pull-to-refresh bisa tidak muncul
+  // saat aplikasi berjalan dalam mode standalone atau saat elemen interaktif aktif.
+  try{ showToast('Memuat ulang dashboard...', 'info', 1200); }catch(e){}
+  try{
+    if(navigator.serviceWorker){
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(r => r.update().catch(()=>{})));
+    }
+  }catch(e){}
+  setTimeout(()=>location.reload(), 180);
 }
 
 // ============================================================
